@@ -53,6 +53,9 @@ returntype methodname(__VA_ARGS__) const
 #define DEFINE_CONST_MEMBER_METHOD(classname, methodname, returntype, ...) Reflection::ReflectionMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_Const_Method_##methodname##_{ #methodname, &methodname };\
 returntype classname::methodname
 
+#define INITIALIZEBOXEDOBJECT(type, alias) typedef BoxedObject<type> alias;\
+Reflection::ReflectionRegister<BoxedObject<type>> BoxedObject<type>::_s_RefectionHelper_BoxedObject
+
 #define typeof(expression) Reflection::GetInstance().GetType<decltype(expression)>()
 
 struct Interface
@@ -79,6 +82,9 @@ struct IType : Interface
 	virtual bool Equal(const IType* other) const noexcept = 0;
 };
 
+template <typename T>
+class BoxedObject;
+
 struct Object
 	: natRefObjImpl<Interface>
 {
@@ -87,7 +93,8 @@ struct Object
 	template <typename T>
 	T& Unbox()
 	{
-		if (GetType()->GetTypeIndex() != typeid(T))
+		auto typeindex = GetType()->GetTypeIndex();
+		if (typeindex != typeid(T) && typeindex != typeid(BoxedObject<T>))
 		{
 			throw std::runtime_error("Type wrong.");
 		}
@@ -122,8 +129,7 @@ struct Object
 	template <typename T>
 	static std::enable_if_t<std::is_integral<T>::value || std::is_floating_point<T>::value, natRefPointer<Object>> Box(T obj);
 
-	/*template <typename T>
-	static natRefPointer<Object> Box();*/
+	static natRefPointer<Object> Box();
 
 protected:
 	virtual void* _getUnsafePtr()
@@ -197,14 +203,44 @@ private:
 	}
 };
 
+template <typename... Args>
+struct MethodHelper<void(*)(Args...)>
+{
+	typedef void(*MethodType)(Args...);
+
+	static decltype(auto) InvokeWithArgs(MethodType method, Args const&... args)
+	{
+		return method(args...);
+	}
+
+	static decltype(auto) InvokeWithArgPack(MethodType method, ArgumentPack const& pack)
+	{
+		typedef typename std::make_index_sequence<sizeof...(Args)>::type indexseq;
+		return InvokeWithArgPackHelper(method, pack, indexseq{});
+	}
+
+	static natRefPointer<Object> Invoke(MethodType method, ArgumentPack const& pack)
+	{
+		InvokeWithArgPack(method, pack);
+		return Object::Box();
+	}
+
+private:
+	template <size_t... i>
+	static decltype(auto) InvokeWithArgPackHelper(MethodType method, ArgumentPack const& pack, std::index_sequence<i...>)
+	{
+		return InvokeWithArgs(method, pack.Get(i)->Unbox<Args>()...);
+	}
+};
+
 template <typename Ret, typename Class, typename... Args>
 struct MethodHelper<Ret (Class::*)(Args...)>
 {
-	typedef Ret(Class::*MethodType)(Args...);
+	typedef Ret (Class::*MethodType)(Args...);
 
 	static decltype(auto) InvokeWithArgs(Class* object, MethodType method, Args const&... args)
 	{
-		return object->*method(args...);
+		return (object->*method)(args...);
 	}
 
 	static decltype(auto) InvokeWithArgPack(Class* object, MethodType method, ArgumentPack const& pack)
@@ -226,14 +262,44 @@ private:
 	}
 };
 
-template <typename Ret, typename Class, typename... Args>
-struct MethodHelper<Ret(Class::*)(Args...) const>
+template <typename Class, typename... Args>
+struct MethodHelper<void (Class::*)(Args...)>
 {
-	typedef Ret(Class::*MethodType)(Args...) const;
+	typedef void (Class::*MethodType)(Args...);
+
+	static decltype(auto) InvokeWithArgs(Class* object, MethodType method, Args const&... args)
+	{
+		return (object->*method)(args...);
+	}
+
+	static decltype(auto) InvokeWithArgPack(Class* object, MethodType method, ArgumentPack const& pack)
+	{
+		typedef typename std::make_index_sequence<sizeof...(Args)>::type indexseq;
+		return InvokeWithArgPackHelper(object, method, pack, indexseq{});
+	}
+
+	static natRefPointer<Object> Invoke(natRefPointer<Object> object, MethodType method, ArgumentPack const& pack)
+	{
+		InvokeWithArgPack(&object->Unbox<Class>(), method, pack);
+		return Object::Box();
+	}
+
+private:
+	template <size_t... i>
+	static decltype(auto) InvokeWithArgPackHelper(Class* object, MethodType method, ArgumentPack const& pack, std::index_sequence<i...>)
+	{
+		return InvokeWithArgs(object, method, pack.Get(i)->Unbox<Args>()...);
+	}
+};
+
+template <typename Ret, typename Class, typename... Args>
+struct MethodHelper<Ret (Class::*)(Args...) const>
+{
+	typedef Ret (Class::*MethodType)(Args...) const;
 
 	static decltype(auto) InvokeWithArgs(const Class* object, MethodType method, Args const&... args)
 	{
-		return object->*method(args...);
+		return (object->*method)(args...);
 	}
 
 	static decltype(auto) InvokeWithArgPack(const Class* object, MethodType method, ArgumentPack const& pack)
@@ -245,6 +311,36 @@ struct MethodHelper<Ret(Class::*)(Args...) const>
 	static natRefPointer<Object> Invoke(natRefPointer<Object> object, MethodType method, ArgumentPack const& pack)
 	{
 		return Object::Box(InvokeWithArgPack(&object->Unbox<Class>(), method, pack));
+	}
+
+private:
+	template <size_t... i>
+	static decltype(auto) InvokeWithArgPackHelper(const Class* object, MethodType method, ArgumentPack const& pack, std::index_sequence<i...>)
+	{
+		return InvokeWithArgs(object, method, pack.Get(i)->Unbox<Args>()...);
+	}
+};
+
+template <typename Class, typename... Args>
+struct MethodHelper<void (Class::*)(Args...) const>
+{
+	typedef void (Class::*MethodType)(Args...) const;
+
+	static decltype(auto) InvokeWithArgs(const Class* object, MethodType method, Args const&... args)
+	{
+		return (object->*method)(args...);
+	}
+
+	static decltype(auto) InvokeWithArgPack(const Class* object, MethodType method, ArgumentPack const& pack)
+	{
+		typedef typename std::make_index_sequence<sizeof...(Args)>::type indexseq;
+		return InvokeWithArgPackHelper(object, method, pack, indexseq{});
+	}
+
+	static natRefPointer<Object> Invoke(natRefPointer<Object> object, MethodType method, ArgumentPack const& pack)
+	{
+		InvokeWithArgPack(&object->Unbox<Class>(), method, pack);
+		return Object::Box();
 	}
 
 private:
@@ -274,7 +370,7 @@ class NonMemberMethod;
 
 template <typename Ret, typename... Args>
 class NonMemberMethod<Ret(*)(Args...)>
-	: public IMethod
+	: public natRefObjImpl<IMethod>
 {
 public:
 	typedef Ret(*MethodType)(Args...);
@@ -308,7 +404,7 @@ class MemberMethod;
 
 template <typename Ret, typename Class, typename... Args>
 class MemberMethod<Ret(Class::*)(Args...)>
-	: public IMemberMethod
+	: public natRefObjImpl<IMemberMethod>
 {
 public:
 	typedef	Ret(Class::*MethodType)(Args...);
@@ -339,7 +435,7 @@ private:
 
 template <typename Ret, typename Class, typename... Args>
 class MemberMethod<Ret(Class::*)(Args...) const>
-	: public IMemberMethod
+	: public natRefObjImpl<IMemberMethod>
 {
 public:
 	typedef	Ret(Class::*MethodType)(Args...) const;
@@ -450,7 +546,7 @@ public:
 		template <typename Func>
 		ReflectionNonMemberMethodRegister(const char* name, Func method)
 		{
-			GetInstance().RegisterNonMemberMethod<T, Func>(name, method);
+			GetInstance().RegisterNonMemberMethod<T>(name, method);
 		}
 	};
 
@@ -460,7 +556,7 @@ public:
 		template <typename Func>
 		ReflectionMemberMethodRegister(const char* name, Func method)
 		{
-			GetInstance().RegisterMemberMethod<T, Func>(name, method);
+			GetInstance().RegisterMemberMethod<T>(name, method);
 		}
 	};
 
@@ -468,12 +564,6 @@ public:
 	{
 		static Reflection s_Instance;
 		return s_Instance;
-	}
-
-	template <typename... Args>
-	std::deque<natRefPointer<IType>> Expand() const
-	{
-		return{ GetType<Args>()... };
 	}
 
 	template <typename Class>
@@ -583,6 +673,19 @@ private:
 template <typename T>
 Reflection::ReflectionRegister<BoxedObject<T>> BoxedObject<T>::_s_RefectionHelper_BoxedObject;
 
+INITIALIZEBOXEDOBJECT(char, Char);
+INITIALIZEBOXEDOBJECT(wchar_t, WChar);
+INITIALIZEBOXEDOBJECT(int8_t, SByte);
+INITIALIZEBOXEDOBJECT(uint8_t, Byte);
+INITIALIZEBOXEDOBJECT(int16_t, Short);
+INITIALIZEBOXEDOBJECT(uint16_t, UShort);
+INITIALIZEBOXEDOBJECT(int32_t, Integer);
+INITIALIZEBOXEDOBJECT(uint32_t, UInteger);
+INITIALIZEBOXEDOBJECT(int64_t, Long);
+INITIALIZEBOXEDOBJECT(uint64_t, ULong);
+INITIALIZEBOXEDOBJECT(float, Float);
+INITIALIZEBOXEDOBJECT(double, Double);
+
 template <>
 class BoxedObject<void>
 	: public Object
@@ -608,19 +711,12 @@ private:
 
 Reflection::ReflectionRegister<BoxedObject<void>> BoxedObject<void>::_s_RefectionHelper_BoxedObject;
 
-typedef BoxedObject<char> Char;
-typedef BoxedObject<wchar_t> WChar;
-typedef BoxedObject<int8_t> SByte;
-typedef BoxedObject<uint8_t> Byte;
-typedef BoxedObject<int16_t> Short;
-typedef BoxedObject<uint16_t> UShort;
-typedef BoxedObject<int32_t> Integer;
-typedef BoxedObject<uint32_t> UInteger;
-typedef BoxedObject<int64_t> Long;
-typedef BoxedObject<uint64_t> ULong;
-typedef BoxedObject<float> Float;
-typedef BoxedObject<double> Double;
 typedef BoxedObject<void> Void;
+
+bool operator==(natRefPointer<Object> const& ptr, nullptr_t)
+{
+	return ptr->GetType()->GetTypeIndex() == typeid(BoxedObject<void>) ? true : ptr.Get() == nullptr;
+}
 
 template <typename T>
 std::enable_if_t<std::is_integral<T>::value || std::is_floating_point<T>::value, natRefPointer<Object>> Object::Box(T obj)
@@ -628,11 +724,10 @@ std::enable_if_t<std::is_integral<T>::value || std::is_floating_point<T>::value,
 	return make_ref<BoxedObject<T>>(obj);
 }
 
-/*template <typename T>
 natRefPointer<Object> Object::Box()
 {
 	return make_ref<BoxedObject<void>>();
-}*/
+}
 
 DECLARE_REFLECTABLE_CLASS(Foo)
 {
@@ -640,12 +735,6 @@ public:
 	GENERATE_METADATA(Foo);
 
 	DECLARE_CONSTRUCTOR(Foo, int);
-
-	/*int GetTest() const
-	{
-		return m_Test;
-	}*/
-
 	DECLARE_CONST_MEMBER_METHOD(Foo, GetTest, int, int);
 
 private:
@@ -682,4 +771,5 @@ int main()
 	{
 		std::cout << e.what() << std::endl;
 	}
+	system("pause");
 }

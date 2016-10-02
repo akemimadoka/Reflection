@@ -1,5 +1,5 @@
 ReflectionTest
 ====
-尝试实现一个C++反射库，目前尚不能编译。
+作者用于练习C++技巧的一个反射库。
 
-Try to implement a reflection library for C++, NOT READY FOR COMPILING NOW.
+A reflection library for author practising C++ skill.
