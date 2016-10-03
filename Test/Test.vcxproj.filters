@@ -15,28 +15,8 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Method.cpp">
+    <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Reflection.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Reflection.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Interface.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Method.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Type.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Object.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>

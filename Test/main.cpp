@@ -1,6 +1,6 @@
 #include <iostream>
 #include <typeindex>
-#include "Reflection.h"
+#include <Reflection.h>
 
 DECLARE_REFLECTABLE_CLASS(Foo)
 {
