@@ -2,6 +2,10 @@
 #include "Interface.h"
 #include <unordered_map>
 
+#define STR(x) #x
+#define CONSTRUCTOR_NAME Constructor
+#define CONSTRUCTOR_NAME_STR STR(Constructor)
+
 template <typename T>
 class Type
 	: public natRefObjImpl<IType>
@@ -26,7 +30,7 @@ public:
 
 	natRefPointer<Object> Construct(ArgumentPack const& args) override
 	{
-		return InvokeNonMember("CreateInstance", args);
+		return InvokeNonMember(CONSTRUCTOR_NAME_STR, args);
 	}
 
 	natRefPointer<Object> InvokeNonMember(const char* name, ArgumentPack const& args) override
@@ -49,6 +53,32 @@ public:
 		}
 
 		return iter->second->Invoke(object, args);
+	}
+
+	bool EnumNonMember(Delegate<bool(const char*, bool, natRefPointer<IType>)> enumFunc) const override
+	{
+		for (auto&& item : m_NonMemberMethodMap)
+		{
+			if (enumFunc(item.first.c_str(), true, {}))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	bool EnumMember(Delegate<bool(const char*, bool, natRefPointer<IType>)> enumFunc) const override
+	{
+		for (auto&& item : m_MemberMethodMap)
+		{
+			if (enumFunc(item.first.c_str(), true, {}))
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	std::type_index GetTypeIndex() const noexcept override

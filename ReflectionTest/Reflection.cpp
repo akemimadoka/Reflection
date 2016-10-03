@@ -42,5 +42,5 @@ natRefPointer<Object> Object::Box()
 
 bool operator==(natRefPointer<Object> const& ptr, nullptr_t)
 {
-	return ptr->GetType()->GetTypeIndex() == typeid(BoxedObject<void>) ? true : ptr.Get() == nullptr;
+	return ptr->GetType()->GetTypeIndex() == typeid(BoxedObject<void>) || ptr.Get() == nullptr;
 }

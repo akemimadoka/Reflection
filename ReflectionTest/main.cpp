@@ -8,7 +8,8 @@ public:
 	GENERATE_METADATA(Foo);
 
 	DECLARE_CONSTRUCTOR(Foo, int);
-	DECLARE_CONST_MEMBER_METHOD(Foo, GetTest, int, int);
+	DECLARE_CONST_MEMBER_METHOD(Foo, GetTest, int);
+	DECLARE_CONST_MEMBER_METHOD(Foo, GetTestWithArg, int, int);
 
 private:
 	int m_Test;
@@ -26,7 +27,12 @@ DEFINE_CONSTRUCTOR(Foo, int)(int value)
 	return make_ref<Foo>(value);
 }
 
-DEFINE_CONST_MEMBER_METHOD(Foo, GetTest, int, int)(int arg) const
+DEFINE_CONST_MEMBER_METHOD(Foo, GetTest, int)() const
+{
+	return m_Test;
+}
+
+DEFINE_CONST_MEMBER_METHOD(Foo, GetTestWithArg, int, int)(int arg) const
 {
 	return m_Test + arg;
 }
@@ -38,7 +44,17 @@ int main()
 		auto type = Reflection::GetInstance().GetType("Foo");
 		std::cout << type->GetName() << std::endl;
 		auto pFoo = type->Construct({ 1 });
-		std::cout << type->InvokeMember(pFoo, "GetTest", { 1 })->Unbox<int>() << std::endl;
+		std::cout << type->InvokeMember(pFoo, "GetTest", {})->Unbox<int>() << std::endl << type->InvokeMember(pFoo, "GetTestWithArg", {1})->Unbox<int>() << std::endl;
+		std::vector<std::string> members{};
+		type->EnumMember([&members](const char* name, bool isMethod, natRefPointer<IType> objectType)
+		{
+			members.emplace_back(name);
+			return false;
+		});
+		for (auto&& item : members)
+		{
+			std::cout << item << std::endl;
+		}
 	}
 	catch (std::exception& e)
 	{

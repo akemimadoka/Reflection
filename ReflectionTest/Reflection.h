@@ -21,10 +21,6 @@ natRefPointer<IType> GetType() override\
 	return Reflection::GetInstance().GetType<_Self_t>();\
 }
 
-#define STR(x) #x
-#define CONSTRUCTOR_NAME CreateInstance
-#define CONSTRUCTOR_NAME_STR STR(CreateInstance)
-
 #define GENERATE_METADATA_DEFINITION(classname) Reflection::ReflectionRegister<classname> classname::_s_RefectionHelper_##classname
 
 #define DECLARE_REFLECTABLE_CLASS(classname) class classname : virtual public Object
@@ -35,10 +31,10 @@ static returntype methodname(__VA_ARGS__)
 #define DEFINE_NONMEMBER_METHOD(classname, methodname, returntype, ...) Reflection::ReflectionNonMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberMethod_##methodname##_{ #methodname, &methodname };\
 returntype classname::methodname
 
-#define DECLARE_CONSTRUCTOR(classname, ...) DECLARE_NONMEMBER_METHOD(classname, CreateInstance, natRefPointer<classname>, __VA_ARGS__);\
+#define DECLARE_CONSTRUCTOR(classname, ...) DECLARE_NONMEMBER_METHOD(classname, Constructor, natRefPointer<classname>, __VA_ARGS__);\
 classname(__VA_ARGS__)
 
-#define DEFINE_CONSTRUCTOR(classname, ...) DEFINE_NONMEMBER_METHOD(classname, CreateInstance, natRefPointer<classname>, __VA_ARGS__)
+#define DEFINE_CONSTRUCTOR(classname, ...) DEFINE_NONMEMBER_METHOD(classname, Constructor, natRefPointer<classname>, __VA_ARGS__)
 
 #define DECLARE_MEMBER_METHOD(classname, methodname, returntype, ...) static Reflection::ReflectionMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_Method_##methodname##_;\
 returntype methodname(__VA_ARGS__)
