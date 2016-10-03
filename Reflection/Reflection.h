@@ -219,6 +219,8 @@ class BoxedObject
 	: public Object
 {
 public:
+	friend struct Object;
+
 	GENERATE_METADATA(BoxedObject)
 
 	BoxedObject()
@@ -267,11 +269,6 @@ public:
 private:
 	static nTString _toString(const BoxedObject* pThis) noexcept;
 
-	void* _getUnsafePtr() override
-	{
-		return &m_Obj;
-	}
-
 	T m_Obj;
 };
 
@@ -300,12 +297,6 @@ public:
 	{
 		return typeid(void);
 	}
-
-private:
-	void* _getUnsafePtr() override
-	{
-		return nullptr;
-	}
 };
 
 bool operator==(natRefPointer<Object> const& ptr, nullptr_t);
@@ -331,7 +322,7 @@ T& Object::Unbox()
 	}
 	if (typeindex == typeid(BoxedObject<T>))
 	{
-		return *static_cast<T*>(_getUnsafePtr());
+		return static_cast<BoxedObject<T>*>(this)->m_Obj;
 	}
 
 	nat_Throw(ReflectionException, _T("Type wrong."));

@@ -48,12 +48,6 @@ struct Object
 	static std::enable_if_t<std::is_integral<T>::value || std::is_floating_point<T>::value, natRefPointer<Object>> Box(T obj);
 
 	static natRefPointer<Object> Box();
-
-protected:
-	virtual void* _getUnsafePtr()
-	{
-		return this;
-	}
 };
 
 #include "Reflection.h"
