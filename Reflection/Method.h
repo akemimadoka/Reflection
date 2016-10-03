@@ -30,9 +30,9 @@ struct MethodHelper<Ret(*)(Args...)>
 {
 	typedef Ret(*MethodType)(Args...);
 
-	static decltype(auto) InvokeWithArgs(MethodType method, Args&... args)
+	static decltype(auto) InvokeWithArgs(MethodType method, Args... args)
 	{
-		return method(std::forward<Args>(args)...);
+		return method(static_cast<Args>(args)...);
 	}
 
 	static decltype(auto) InvokeWithArgPack(MethodType method, ArgumentPack const& pack)
@@ -54,7 +54,7 @@ private:
 	template <size_t... i>
 	static decltype(auto) InvokeWithArgPackHelper(MethodType method, ArgumentPack const& pack, std::index_sequence<i...>)
 	{
-		return InvokeWithArgs(method, pack.Get(i)->Unbox<Args>()...);
+		return InvokeWithArgs(method, static_cast<Args>(pack.Get(i)->Unbox<std::remove_cv_t<std::remove_reference_t<Args>>>())...);
 	}
 
 	template <size_t... i>
@@ -69,9 +69,9 @@ struct MethodHelper<void(*)(Args...)>
 {
 	typedef void(*MethodType)(Args...);
 
-	static decltype(auto) InvokeWithArgs(MethodType method, Args&... args)
+	static decltype(auto) InvokeWithArgs(MethodType method, Args... args)
 	{
-		return method(std::forward<Args>(args)...);
+		return method(static_cast<Args>(args)...);
 	}
 
 	static decltype(auto) InvokeWithArgPack(MethodType method, ArgumentPack const& pack)
@@ -95,7 +95,7 @@ private:
 	template <size_t... i>
 	static decltype(auto) InvokeWithArgPackHelper(MethodType method, ArgumentPack const& pack, std::index_sequence<i...>)
 	{
-		return InvokeWithArgs(method, pack.Get(i)->Unbox<Args>()...);
+		return InvokeWithArgs(method, static_cast<Args>(pack.Get(i)->Unbox<std::remove_cv_t<std::remove_reference_t<Args>>>())...);
 	}
 
 	template <size_t... i>
@@ -110,9 +110,9 @@ struct MethodHelper<Ret(Class::*)(Args...)>
 {
 	typedef Ret(Class::*MethodType)(Args...);
 
-	static decltype(auto) InvokeWithArgs(Class* object, MethodType method, Args&... args)
+	static decltype(auto) InvokeWithArgs(Class* object, MethodType method, Args... args)
 	{
-		return (object->*method)(std::forward<Args>(args)...);
+		return (object->*method)(static_cast<Args>(args)...);
 	}
 
 	static decltype(auto) InvokeWithArgPack(Class* object, MethodType method, ArgumentPack const& pack)
@@ -135,7 +135,7 @@ private:
 	template <size_t... i>
 	static decltype(auto) InvokeWithArgPackHelper(Class* object, MethodType method, ArgumentPack const& pack, std::index_sequence<i...>)
 	{
-		return InvokeWithArgs(object, method, pack.Get(i)->Unbox<Args>()...);
+		return InvokeWithArgs(object, method, static_cast<Args>(pack.Get(i)->Unbox<std::remove_cv_t<std::remove_reference_t<Args>>>())...);
 	}
 
 	template <size_t... i>
@@ -150,9 +150,9 @@ struct MethodHelper<void (Class::*)(Args...)>
 {
 	typedef void (Class::*MethodType)(Args...);
 
-	static decltype(auto) InvokeWithArgs(Class* object, MethodType method, Args&... args)
+	static decltype(auto) InvokeWithArgs(Class* object, MethodType method, Args... args)
 	{
-		return (object->*method)(std::forward<Args>(args)...);
+		return (object->*method)(static_cast<Args>(args)...);
 	}
 
 	static decltype(auto) InvokeWithArgPack(Class* object, MethodType method, ArgumentPack const& pack)
@@ -176,7 +176,7 @@ private:
 	template <size_t... i>
 	static decltype(auto) InvokeWithArgPackHelper(Class* object, MethodType method, ArgumentPack const& pack, std::index_sequence<i...>)
 	{
-		return InvokeWithArgs(object, method, pack.Get(i)->Unbox<Args>()...);
+		return InvokeWithArgs(object, method, static_cast<Args>(pack.Get(i)->Unbox<std::remove_cv_t<std::remove_reference_t<Args>>>())...);
 	}
 
 	template <size_t... i>
@@ -191,9 +191,9 @@ struct MethodHelper<Ret(Class::*)(Args...) const>
 {
 	typedef Ret(Class::*MethodType)(Args...) const;
 
-	static decltype(auto) InvokeWithArgs(const Class* object, MethodType method, Args&... args)
+	static decltype(auto) InvokeWithArgs(const Class* object, MethodType method, Args... args)
 	{
-		return (object->*method)(std::forward<Args>(args)...);
+		return (object->*method)(static_cast<Args>(args)...);
 	}
 
 	static decltype(auto) InvokeWithArgPack(const Class* object, MethodType method, ArgumentPack const& pack)
@@ -216,7 +216,7 @@ private:
 	template <size_t... i>
 	static decltype(auto) InvokeWithArgPackHelper(const Class* object, MethodType method, ArgumentPack const& pack, std::index_sequence<i...>)
 	{
-		return InvokeWithArgs(object, method, pack.Get(i)->Unbox<Args>()...);
+		return InvokeWithArgs(object, method, static_cast<Args>(pack.Get(i)->Unbox<std::remove_cv_t<std::remove_reference_t<Args>>>())...);
 	}
 
 	template <size_t... i>
@@ -231,9 +231,9 @@ struct MethodHelper<void (Class::*)(Args...) const>
 {
 	typedef void (Class::*MethodType)(Args...) const;
 
-	static decltype(auto) InvokeWithArgs(const Class* object, MethodType method, Args&... args)
+	static decltype(auto) InvokeWithArgs(const Class* object, MethodType method, Args... args)
 	{
-		return (object->*method)(std::forward<Args>(args)...);
+		return (object->*method)(static_cast<Args>(args)...);
 	}
 
 	static decltype(auto) InvokeWithArgPack(const Class* object, MethodType method, ArgumentPack const& pack)
@@ -257,7 +257,7 @@ private:
 	template <size_t... i>
 	static decltype(auto) InvokeWithArgPackHelper(const Class* object, MethodType method, ArgumentPack const& pack, std::index_sequence<i...>)
 	{
-		return InvokeWithArgs(object, method, pack.Get(i)->Unbox<Args>()...);
+		return InvokeWithArgs(object, method, std::forward<Args>(pack.Get(i)->Unbox<std::remove_cv_t<std::remove_reference_t<Args>>>())...);
 	}
 
 	template <size_t... i>
