@@ -1,16 +1,16 @@
 #include "Reflection.h"
 
-natRefPointer<IType> Reflection::GetType(const char* typeName)
+natRefPointer<IType> Reflection::GetType(ncTStr typeName)
 {
 	for (auto&& item : m_TypeTable)
 	{
-		if (!strcmp(item.second->GetName(), typeName))
+		if (!_tcscmp(item.second->GetName(), typeName))
 		{
 			return item.second;
 		}
 	}
 
-	throw std::runtime_error("Type not found.");
+	nat_Throw(ReflectionException, _T("Type not found."));
 }
 
 Reflection::Reflection()
@@ -20,6 +20,9 @@ Reflection::Reflection()
 Reflection::~Reflection()
 {
 }
+
+#undef INITIALIZEBOXEDOBJECT
+#define INITIALIZEBOXEDOBJECT(type, alias) Reflection::ReflectionRegister<BoxedObject<type>> BoxedObject<type>::_s_RefectionHelper_BoxedObject
 
 INITIALIZEBOXEDOBJECT(char, Char);
 INITIALIZEBOXEDOBJECT(wchar_t, WChar);

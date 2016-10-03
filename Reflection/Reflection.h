@@ -12,9 +12,9 @@ using namespace NatsuLib;
 
 #define GENERATE_METADATA(classname) typedef classname _Self_t;\
 static Reflection::ReflectionRegister<_Self_t> _s_RefectionHelper_##classname;\
-static const char* GetName()\
+static ncTStr GetName()\
 {\
-	return #classname;\
+	return _T(#classname);\
 }\
 natRefPointer<IType> GetType() override\
 {\
@@ -25,27 +25,29 @@ natRefPointer<IType> GetType() override\
 
 #define DECLARE_REFLECTABLE_CLASS(classname) class classname : virtual public Object
 
-#define DECLARE_NONMEMBER_METHOD(classname, methodname, returntype, ...) static Reflection::ReflectionNonMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_NonMemberMethod_##methodname##_;\
+#define DECLARE_NONMEMBER_METHOD(classname, methodname, id, returntype, ...) static Reflection::ReflectionNonMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_NonMemberMethod_##methodname##_##returntype##_##id##_;\
 static returntype methodname(__VA_ARGS__) 
 
-#define DEFINE_NONMEMBER_METHOD(classname, methodname, returntype, ...) Reflection::ReflectionNonMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberMethod_##methodname##_{ #methodname, &methodname };\
+#define DEFINE_NONMEMBER_METHOD(classname, methodname, id, returntype, ...) Reflection::ReflectionNonMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberMethod_##methodname##_##returntype##_##id##_{ _T(#methodname), static_cast<returntype(*)(__VA_ARGS__)>(&methodname) };\
 returntype classname::methodname
 
-#define DECLARE_CONSTRUCTOR(classname, ...) DECLARE_NONMEMBER_METHOD(classname, Constructor, natRefPointer<classname>, __VA_ARGS__);\
+#define DECLARE_CONSTRUCTOR(classname, id, ...) static Reflection::ReflectionNonMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_NonMemberMethod_##Constructor##id##_;\
+static natRefPointer<Object> Constructor(__VA_ARGS__);\
 classname(__VA_ARGS__)
 
-#define DEFINE_CONSTRUCTOR(classname, ...) DEFINE_NONMEMBER_METHOD(classname, Constructor, natRefPointer<classname>, __VA_ARGS__)
+#define DEFINE_CONSTRUCTOR(classname, id, ...) Reflection::ReflectionNonMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberMethod_##Constructor##id##_{ _T("Constructor"), static_cast<natRefPointer<Object>(*)(__VA_ARGS__)>(&Constructor) };\
+natRefPointer<Object> classname::Constructor
 
-#define DECLARE_MEMBER_METHOD(classname, methodname, returntype, ...) static Reflection::ReflectionMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_Method_##methodname##_;\
+#define DECLARE_MEMBER_METHOD(classname, methodname, id, returntype, ...) static Reflection::ReflectionMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_Method_##methodname##_##returntype##_##id##_;\
 returntype methodname(__VA_ARGS__)
 
-#define DEFINE_MEMBER_METHOD(classname, methodname, returntype, ...) Reflection::ReflectionMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_Method_##methodname##_{ #methodname, &methodname };\
+#define DEFINE_MEMBER_METHOD(classname, methodname, id, returntype, ...) Reflection::ReflectionMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_Method_##methodname##_##returntype##_##id##_{ _T(#methodname), static_cast<returntype(classname::*)(__VA_ARGS__)>(&methodname) };\
 returntype classname::methodname
 
-#define DECLARE_CONST_MEMBER_METHOD(classname, methodname, returntype, ...) static Reflection::ReflectionMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_Const_Method_##methodname##_;\
+#define DECLARE_CONST_MEMBER_METHOD(classname, methodname, id, returntype, ...) static Reflection::ReflectionMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_Const_Method_##methodname##_##returntype##_##id##_;\
 returntype methodname(__VA_ARGS__) const
 
-#define DEFINE_CONST_MEMBER_METHOD(classname, methodname, returntype, ...) Reflection::ReflectionMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_Const_Method_##methodname##_{ #methodname, &methodname };\
+#define DEFINE_CONST_MEMBER_METHOD(classname, methodname, id, returntype, ...) Reflection::ReflectionMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_Const_Method_##methodname##_##returntype##_##id##_{ _T(#methodname), static_cast<returntype(classname::*)(__VA_ARGS__) const>(&methodname) };\
 returntype classname::methodname
 
 #define typeof(expression) Reflection::GetInstance().GetType<decltype(expression)>()
@@ -66,7 +68,7 @@ public:
 	struct ReflectionNonMemberMethodRegister
 	{
 		template <typename Func>
-		ReflectionNonMemberMethodRegister(const char* name, Func method)
+		ReflectionNonMemberMethodRegister(ncTStr name, Func method)
 		{
 			GetInstance().RegisterNonMemberMethod<T>(name, method);
 		}
@@ -76,7 +78,7 @@ public:
 	struct ReflectionMemberMethodRegister
 	{
 		template <typename Func>
-		ReflectionMemberMethodRegister(const char* name, Func method)
+		ReflectionMemberMethodRegister(ncTStr name, Func method)
 		{
 			GetInstance().RegisterMemberMethod<T>(name, method);
 		}
@@ -95,13 +97,13 @@ public:
 	}
 
 	template <typename Class, typename Func>
-	void RegisterNonMemberMethod(const char* name, Func method)
+	void RegisterNonMemberMethod(ncTStr name, Func method)
 	{
 		GetType<Class>()->RegisterNonMemberMethod(name, make_ref<NonMemberMethod<Func>>(method));
 	}
 
 	template <typename Class, typename Func>
-	void RegisterMemberMethod(const char* name, Func method)
+	void RegisterMemberMethod(ncTStr name, Func method)
 	{
 		GetType<Class>()->RegisterMemberMethod(name, make_ref<MemberMethod<Func>>(method));
 	}
@@ -115,10 +117,10 @@ public:
 			return iter->second;
 		}
 
-		throw std::runtime_error("Type not found.");
+		nat_Throw(ReflectionException, _T("Type not found."));
 	}
 
-	natRefPointer<IType> GetType(const char* typeName);
+	natRefPointer<IType> GetType(ncTStr typeName);
 
 private:
 	Reflection();
@@ -127,8 +129,8 @@ private:
 	std::unordered_map<std::type_index, natRefPointer<IType>> m_TypeTable;
 };
 
-#define INITIALIZEBOXEDOBJECT(type, alias) typedef BoxedObject<type> alias;\
-Reflection::ReflectionRegister<BoxedObject<type>> BoxedObject<type>::_s_RefectionHelper_BoxedObject
+#undef INITIALIZEBOXEDOBJECT
+#define INITIALIZEBOXEDOBJECT(type, alias) typedef BoxedObject<type> alias;
 
 #include "Object.h"
 
@@ -139,7 +141,7 @@ class BoxedObject
 public:
 	GENERATE_METADATA(BoxedObject)
 
-		BoxedObject()
+	BoxedObject()
 		: m_Obj{}
 	{
 	}
@@ -188,9 +190,9 @@ class BoxedObject<void>
 public:
 	typedef BoxedObject<void> _Self_t;
 	static Reflection::ReflectionRegister<_Self_t> _s_RefectionHelper_BoxedObject;
-	static const char* GetName()
+	static ncTStr GetName()
 	{
-		return "BoxedObject<void>";
+		return _T("BoxedObject<void>");
 	}
 	natRefPointer<IType> GetType() override
 	{
@@ -210,21 +212,68 @@ template <typename T>
 T& Object::Unbox()
 {
 	auto typeindex = GetType()->GetTypeIndex();
+	if (typeindex == typeid(BoxedObject<void>))
+	{
+		nat_Throw(ReflectionException, _T("Cannot unbox a void object."));
+	}
 	if (typeindex == typeid(T))
 	{
 		auto pRet = natUtil::Expect<T*>::Get(this);
-		return *(pRet ? pRet : throw std::runtime_error("Type wrong."));
+		if (pRet)
+		{
+			return *pRet;
+		}
+
+		nat_Throw(ReflectionException, _T("Type wrong."));
 	}
 	if (typeindex == typeid(BoxedObject<T>))
 	{
 		return *static_cast<T*>(_getUnsafePtr());
 	}
 
-	throw std::runtime_error("Type wrong.");
+	nat_Throw(ReflectionException, _T("Type wrong."));
 }
+
+INITIALIZEBOXEDOBJECT(char, Char);
+INITIALIZEBOXEDOBJECT(wchar_t, WChar);
+INITIALIZEBOXEDOBJECT(int8_t, SByte);
+INITIALIZEBOXEDOBJECT(uint8_t, Byte);
+INITIALIZEBOXEDOBJECT(int16_t, Short);
+INITIALIZEBOXEDOBJECT(uint16_t, UShort);
+INITIALIZEBOXEDOBJECT(int32_t, Integer);
+INITIALIZEBOXEDOBJECT(uint32_t, UInteger);
+INITIALIZEBOXEDOBJECT(int64_t, Long);
+INITIALIZEBOXEDOBJECT(uint64_t, ULong);
+INITIALIZEBOXEDOBJECT(float, Float);
+INITIALIZEBOXEDOBJECT(double, Double);
+INITIALIZEBOXEDOBJECT(void, Void);
 
 template <typename T>
 std::enable_if_t<std::is_integral<T>::value || std::is_floating_point<T>::value, natRefPointer<Object>> Object::Box(T obj)
 {
 	return make_ref<BoxedObject<T>>(obj);
 }
+
+namespace _detail
+{
+	template <typename T, bool test>
+	struct boxed_type_impl
+	{
+		typedef T type;
+	};
+
+	template <typename T>
+	struct boxed_type_impl<T, true>
+	{
+		typedef BoxedObject<T> type;
+	};
+}
+
+template <typename T>
+struct boxed_type
+	: _detail::boxed_type_impl<T, std::is_integral<T>::value || std::is_floating_point<T>::value>
+{
+};
+
+template <typename T>
+using boxed_type_t = typename boxed_type<T>::type;

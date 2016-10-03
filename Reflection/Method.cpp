@@ -16,6 +16,11 @@ natRefPointer<Object> ArgumentPack::Get(size_t n) const
 	return m_Args.at(n);
 }
 
+natRefPointer<IType> ArgumentPack::GetType(size_t n) const
+{
+	return m_Args.at(n)->GetType();
+}
+
 size_t ArgumentPack::Size() const
 {
 	return m_Args.size();
