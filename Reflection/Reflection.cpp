@@ -22,7 +22,7 @@ Reflection::~Reflection()
 }
 
 #undef INITIALIZEBOXEDOBJECT
-#define INITIALIZEBOXEDOBJECT(type, alias) Reflection::ReflectionRegister<BoxedObject<type>> BoxedObject<type>::_s_RefectionHelper_BoxedObject
+#define INITIALIZEBOXEDOBJECT(type, alias) Reflection::ReflectionClassRegister<BoxedObject<type>> BoxedObject<type>::_s_RefectionHelper_BoxedObject
 
 INITIALIZEBOXEDOBJECT(char, Char);
 INITIALIZEBOXEDOBJECT(wchar_t, WChar);
@@ -46,4 +46,9 @@ natRefPointer<Object> Object::Box()
 bool operator==(natRefPointer<Object> const& ptr, nullptr_t)
 {
 	return ptr->GetType()->GetTypeIndex() == typeid(BoxedObject<void>) || ptr.Get() == nullptr;
+}
+
+bool operator==(nullptr_t, natRefPointer<Object> const& ptr)
+{
+	return ptr == nullptr;
 }

@@ -14,7 +14,7 @@ public:
 	DECLARE_CONST_MEMBER_METHOD(Foo, GetTest, 1, int, int);
 
 private:
-	int m_Test;
+	DECLARE_MEMBER_FIELD(Foo, int, m_Test);
 };
 
 GENERATE_METADATA_DEFINITION(Foo);
@@ -42,6 +42,8 @@ DEFINE_CONST_MEMBER_METHOD(Foo, GetTest, 1, int, int)(int arg) const
 	return m_Test + arg;
 }
 
+DEFINE_MEMBER_FIELD(Foo, int, m_Test);
+
 int main()
 {
 	try
@@ -60,6 +62,7 @@ int main()
 		{
 			std::wcout << item << std::endl;
 		}
+		std::wcout << type->ReadMemberField(pFoo, _T("m_Test"))->Unbox<int>() << std::endl;
 	}
 	catch (std::exception& e)
 	{

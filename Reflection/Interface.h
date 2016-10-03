@@ -36,18 +36,41 @@ struct IMemberMethod
 	virtual natRefPointer<IType> GetReturnType() const noexcept = 0;
 };
 
+struct IField
+	: Interface
+{
+	virtual natRefPointer<IType> GetType() = 0;
+	virtual natRefPointer<Object> Read() = 0;
+	virtual void Write(natRefPointer<Object> value) = 0;
+};
+
+struct IMemberField
+	: Interface
+{
+	virtual natRefPointer<IType> GetType() = 0;
+	virtual natRefPointer<Object> ReadFrom(natRefPointer<Object> object) = 0;
+	virtual void WriteFrom(natRefPointer<Object> object, natRefPointer<Object> value) = 0;
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief	类型接口
 ////////////////////////////////////////////////////////////////////////////////
-struct IType : Interface
+struct IType
+	: Interface
 {
 	virtual void RegisterNonMemberMethod(ncTStr name, natRefPointer<IMethod> method) = 0;
 	virtual void RegisterMemberMethod(ncTStr name, natRefPointer<IMemberMethod> method) = 0;
+	virtual void RegisterNonMemberField(ncTStr name, natRefPointer<IField> field) = 0;
+	virtual void RegisterMemberField(ncTStr name, natRefPointer<IMemberField> field) = 0;
 
 	virtual ncTStr GetName() const noexcept = 0;
 	virtual natRefPointer<Object> Construct(ArgumentPack const& args) = 0;
 	virtual natRefPointer<Object> InvokeNonMember(ncTStr name, ArgumentPack const& args) = 0;
 	virtual natRefPointer<Object> InvokeMember(natRefPointer<Object> object, ncTStr name, ArgumentPack const& args) = 0;
+	virtual natRefPointer<Object> ReadNonMemberField(ncTStr name) = 0;
+	virtual natRefPointer<Object> ReadMemberField(natRefPointer<Object> object, ncTStr name) = 0;
+	virtual void WriteNonMemberField(ncTStr name, natRefPointer<Object> value) = 0;
+	virtual void WriteMemberField(natRefPointer<Object> object, ncTStr name, natRefPointer<Object> value) = 0;
 
 	/// @brief	枚举该类型下的非成员，当枚举函数返回true时立即结束枚举
 	/// @param	enumFunc	枚举函数，接受参数的含义为 非成员名，是否为方法，非方法的类型（若是方法则为nullptr），返回bool值

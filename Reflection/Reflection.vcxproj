@@ -170,6 +170,7 @@
     <ClCompile Include="Reflection.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Field.h" />
     <ClInclude Include="Interface.h" />
     <ClInclude Include="Method.h" />
     <ClInclude Include="Object.h" />

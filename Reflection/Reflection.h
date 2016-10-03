@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <typeindex>
 #include "Method.h"
+#include "Field.h"
 #include "Type.h"
 
 using namespace NatsuLib;
@@ -11,7 +12,7 @@ using namespace NatsuLib;
 #undef RegisterClass
 
 #define GENERATE_METADATA(classname) typedef classname _Self_t;\
-static Reflection::ReflectionRegister<_Self_t> _s_RefectionHelper_##classname;\
+static Reflection::ReflectionClassRegister<_Self_t> _s_RefectionHelper_##classname;\
 static ncTStr GetName()\
 {\
 	return _T(#classname);\
@@ -21,14 +22,14 @@ natRefPointer<IType> GetType() override\
 	return Reflection::GetInstance().GetType<_Self_t>();\
 }
 
-#define GENERATE_METADATA_DEFINITION(classname) Reflection::ReflectionRegister<classname> classname::_s_RefectionHelper_##classname
+#define GENERATE_METADATA_DEFINITION(classname) Reflection::ReflectionClassRegister<classname> classname::_s_RefectionHelper_##classname
 
 #define DECLARE_REFLECTABLE_CLASS(classname) class classname : virtual public Object
 
 #define DECLARE_NONMEMBER_METHOD(classname, methodname, id, returntype, ...) static Reflection::ReflectionNonMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_NonMemberMethod_##methodname##_##returntype##_##id##_;\
 static returntype methodname(__VA_ARGS__) 
 
-#define DEFINE_NONMEMBER_METHOD(classname, methodname, id, returntype, ...) Reflection::ReflectionNonMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberMethod_##methodname##_##returntype##_##id##_{ _T(#methodname), static_cast<returntype(*)(__VA_ARGS__)>(&methodname) };\
+#define DEFINE_NONMEMBER_METHOD(classname, methodname, id, returntype, ...) Reflection::ReflectionNonMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberMethod_##methodname##_##returntype##_##id##_{ _T(#methodname), static_cast<returntype(*)(__VA_ARGS__)>(&classname::methodname) };\
 returntype classname::methodname
 
 #define DECLARE_CONSTRUCTOR(classname, id, ...) static Reflection::ReflectionNonMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_NonMemberMethod_##Constructor##id##_;\
@@ -44,17 +45,28 @@ natRefPointer<Object> classname::Constructor
 #define DECLARE_DEFAULT_MOVECONSTRUCTOR(classname) DECLARE_CONSTRUCTOR(classname, MoveConstructor, classname &&) = default
 #define DEFINE_DEFAULT_MOVECONSTRUCTOR(classname) DEFINE_CONSTRUCTOR(classname, MoveConstructor, classname &&)(classname && other) { return make_ref<classname>(std::move(other)); }
 
-#define DECLARE_MEMBER_METHOD(classname, methodname, id, returntype, ...) static Reflection::ReflectionMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_Method_##methodname##_##returntype##_##id##_;\
+#define DECLARE_MEMBER_METHOD(classname, methodname, id, returntype, ...) static Reflection::ReflectionMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_MemberMethod_##methodname##_##returntype##_##id##_;\
 returntype methodname(__VA_ARGS__)
 
-#define DEFINE_MEMBER_METHOD(classname, methodname, id, returntype, ...) Reflection::ReflectionMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_Method_##methodname##_##returntype##_##id##_{ _T(#methodname), static_cast<returntype(classname::*)(__VA_ARGS__)>(&methodname) };\
+#define DEFINE_MEMBER_METHOD(classname, methodname, id, returntype, ...) Reflection::ReflectionMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_MemberMethod_##methodname##_##returntype##_##id##_{ _T(#methodname), static_cast<returntype(classname::*)(__VA_ARGS__)>(&classname::methodname) };\
 returntype classname::methodname
 
-#define DECLARE_CONST_MEMBER_METHOD(classname, methodname, id, returntype, ...) static Reflection::ReflectionMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_Const_Method_##methodname##_##returntype##_##id##_;\
+#define DECLARE_CONST_MEMBER_METHOD(classname, methodname, id, returntype, ...) static Reflection::ReflectionMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_Const_MemberMethod_##methodname##_##returntype##_##id##_;\
 returntype methodname(__VA_ARGS__) const
 
-#define DEFINE_CONST_MEMBER_METHOD(classname, methodname, id, returntype, ...) Reflection::ReflectionMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_Const_Method_##methodname##_##returntype##_##id##_{ _T(#methodname), static_cast<returntype(classname::*)(__VA_ARGS__) const>(&methodname) };\
+#define DEFINE_CONST_MEMBER_METHOD(classname, methodname, id, returntype, ...) Reflection::ReflectionMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_Const_MemberMethod_##methodname##_##returntype##_##id##_{ _T(#methodname), static_cast<returntype(classname::*)(__VA_ARGS__) const>(&classname::methodname) };\
 returntype classname::methodname
+
+#define DECLARE_NONMEMBER_FIELD(classname, fieldtype, fieldname) static Reflection::ReflectionNonMemberFieldRegister<classname> _s_ReflectionHelper_##classname##_NonMemberField_##fieldtype##_##fieldname##_;\
+static fieldtype fieldname
+
+#define DEFINE_NONMEMBER_FIELD(classname, fieldtype, fieldname) Reflection::ReflectionNonMemberFieldRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberField_##fieldtype##_##fieldname##_{ _T(#fieldname), &classname::fieldname };\
+fieldtype classname::fieldname
+
+#define DECLARE_MEMBER_FIELD(classname, fieldtype, fieldname) static Reflection::ReflectionMemberFieldRegister<classname> _s_ReflectionHelper_##classname##_MemberField_##fieldtype##_##fieldname##_;\
+fieldtype fieldname
+
+#define DEFINE_MEMBER_FIELD(classname, fieldtype, fieldname) Reflection::ReflectionMemberFieldRegister<classname> classname::_s_ReflectionHelper_##classname##_MemberField_##fieldtype##_##fieldname##_{ _T(#fieldname), &classname::fieldname }
 
 #define typeof(expression) Reflection::GetInstance().GetType<decltype(expression)>()
 
@@ -62,9 +74,9 @@ class Reflection
 {
 public:
 	template <typename T>
-	struct ReflectionRegister
+	struct ReflectionClassRegister
 	{
-		ReflectionRegister()
+		ReflectionClassRegister()
 		{
 			GetInstance().RegisterClass<T>();
 		}
@@ -90,6 +102,26 @@ public:
 		}
 	};
 
+	template <typename T>
+	struct ReflectionNonMemberFieldRegister
+	{
+		template <typename U>
+		ReflectionNonMemberFieldRegister(ncTStr name, U field)
+		{
+			GetInstance().RegisterNonMemberField<T>(name, field);
+		}
+	};
+
+	template <typename T>
+	struct ReflectionMemberFieldRegister
+	{
+		template <typename U>
+		ReflectionMemberFieldRegister(ncTStr name, U field)
+		{
+			GetInstance().RegisterMemberField<T>(name, field);
+		}
+	};
+
 	static Reflection& GetInstance()
 	{
 		static Reflection s_Instance;
@@ -112,6 +144,18 @@ public:
 	void RegisterMemberMethod(ncTStr name, Func method)
 	{
 		GetType<Class>()->RegisterMemberMethod(name, make_ref<MemberMethod<Func>>(method));
+	}
+
+	template <typename Class, typename Field>
+	void RegisterNonMemberField(ncTStr name, Field field)
+	{
+		GetType<Class>()->RegisterNonMemberField(name, make_ref<NonMemberField<Field>>(field));
+	}
+
+	template <typename Class, typename Field>
+	void RegisterMemberField(ncTStr name, Field field)
+	{
+		GetType<Class>()->RegisterMemberField(name, make_ref<MemberField<Field>>(field));
 	}
 
 	template <typename Class>
@@ -177,6 +221,11 @@ public:
 		return m_Obj;
 	}
 
+	std::type_index GetUnboxedType() override
+	{
+		return typeid(T);
+	}
+
 private:
 	void* _getUnsafePtr() override
 	{
@@ -192,7 +241,7 @@ class BoxedObject<void>
 {
 public:
 	typedef BoxedObject<void> _Self_t;
-	static Reflection::ReflectionRegister<_Self_t> _s_RefectionHelper_BoxedObject;
+	static Reflection::ReflectionClassRegister<_Self_t> _s_RefectionHelper_BoxedObject;
 	static ncTStr GetName()
 	{
 		return _T("BoxedObject<void>");
@@ -200,6 +249,11 @@ public:
 	natRefPointer<IType> GetType() override
 	{
 		return Reflection::GetInstance().GetType<_Self_t>();
+	}
+
+	std::type_index GetUnboxedType() override
+	{
+		return typeid(void);
 	}
 
 private:
@@ -210,6 +264,7 @@ private:
 };
 
 bool operator==(natRefPointer<Object> const& ptr, nullptr_t);
+bool operator==(nullptr_t, natRefPointer<Object> const& ptr);
 
 template <typename T>
 T& Object::Unbox()

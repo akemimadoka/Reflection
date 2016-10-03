@@ -8,6 +8,11 @@ struct Object
 {
 	virtual natRefPointer<IType> GetType() = 0;
 
+	virtual std::type_index GetUnboxedType()
+	{
+		return GetType()->GetTypeIndex();
+	}
+
 	template <typename T>
 	T& Unbox();
 
