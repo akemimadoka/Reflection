@@ -30,9 +30,9 @@ struct MethodHelper<Ret(*)(Args...)>
 {
 	typedef Ret(*MethodType)(Args...);
 
-	static decltype(auto) InvokeWithArgs(MethodType method, Args const&... args)
+	static decltype(auto) InvokeWithArgs(MethodType method, Args&... args)
 	{
-		return method(args...);
+		return method(std::forward<Args>(args)...);
 	}
 
 	static decltype(auto) InvokeWithArgPack(MethodType method, ArgumentPack const& pack)
@@ -69,9 +69,9 @@ struct MethodHelper<void(*)(Args...)>
 {
 	typedef void(*MethodType)(Args...);
 
-	static decltype(auto) InvokeWithArgs(MethodType method, Args const&... args)
+	static decltype(auto) InvokeWithArgs(MethodType method, Args&... args)
 	{
-		return method(args...);
+		return method(std::forward<Args>(args)...);
 	}
 
 	static decltype(auto) InvokeWithArgPack(MethodType method, ArgumentPack const& pack)
@@ -110,9 +110,9 @@ struct MethodHelper<Ret(Class::*)(Args...)>
 {
 	typedef Ret(Class::*MethodType)(Args...);
 
-	static decltype(auto) InvokeWithArgs(Class* object, MethodType method, Args const&... args)
+	static decltype(auto) InvokeWithArgs(Class* object, MethodType method, Args&... args)
 	{
-		return (object->*method)(args...);
+		return (object->*method)(std::forward<Args>(args)...);
 	}
 
 	static decltype(auto) InvokeWithArgPack(Class* object, MethodType method, ArgumentPack const& pack)
@@ -150,9 +150,9 @@ struct MethodHelper<void (Class::*)(Args...)>
 {
 	typedef void (Class::*MethodType)(Args...);
 
-	static decltype(auto) InvokeWithArgs(Class* object, MethodType method, Args const&... args)
+	static decltype(auto) InvokeWithArgs(Class* object, MethodType method, Args&... args)
 	{
-		return (object->*method)(args...);
+		return (object->*method)(std::forward<Args>(args)...);
 	}
 
 	static decltype(auto) InvokeWithArgPack(Class* object, MethodType method, ArgumentPack const& pack)
@@ -191,9 +191,9 @@ struct MethodHelper<Ret(Class::*)(Args...) const>
 {
 	typedef Ret(Class::*MethodType)(Args...) const;
 
-	static decltype(auto) InvokeWithArgs(const Class* object, MethodType method, Args const&... args)
+	static decltype(auto) InvokeWithArgs(const Class* object, MethodType method, Args&... args)
 	{
-		return (object->*method)(args...);
+		return (object->*method)(std::forward<Args>(args)...);
 	}
 
 	static decltype(auto) InvokeWithArgPack(const Class* object, MethodType method, ArgumentPack const& pack)
@@ -231,9 +231,9 @@ struct MethodHelper<void (Class::*)(Args...) const>
 {
 	typedef void (Class::*MethodType)(Args...) const;
 
-	static decltype(auto) InvokeWithArgs(const Class* object, MethodType method, Args const&... args)
+	static decltype(auto) InvokeWithArgs(const Class* object, MethodType method, Args&... args)
 	{
-		return (object->*method)(args...);
+		return (object->*method)(std::forward<Args>(args)...);
 	}
 
 	static decltype(auto) InvokeWithArgPack(const Class* object, MethodType method, ArgumentPack const& pack)

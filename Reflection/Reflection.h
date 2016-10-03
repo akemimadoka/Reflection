@@ -38,6 +38,12 @@ classname(__VA_ARGS__)
 #define DEFINE_CONSTRUCTOR(classname, id, ...) Reflection::ReflectionNonMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberMethod_##Constructor##id##_{ _T("Constructor"), static_cast<natRefPointer<Object>(*)(__VA_ARGS__)>(&Constructor) };\
 natRefPointer<Object> classname::Constructor
 
+#define DECLARE_DEFAULT_COPYCONSTRUCTOR(classname) DECLARE_CONSTRUCTOR(classname, CopyConstructor, classname const&) = default
+#define DEFINE_DEFAULT_COPYCONSTRUCTOR(classname) DEFINE_CONSTRUCTOR(classname, CopyConstructor, classname const&)(classname const& other) { return make_ref<classname>(other); }
+
+#define DECLARE_DEFAULT_MOVECONSTRUCTOR(classname) DECLARE_CONSTRUCTOR(classname, MoveConstructor, classname &&) = default
+#define DEFINE_DEFAULT_MOVECONSTRUCTOR(classname) DEFINE_CONSTRUCTOR(classname, MoveConstructor, classname &&)(classname && other) { return make_ref<classname>(std::move(other)); }
+
 #define DECLARE_MEMBER_METHOD(classname, methodname, id, returntype, ...) static Reflection::ReflectionMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_Method_##methodname##_##returntype##_##id##_;\
 returntype methodname(__VA_ARGS__)
 
@@ -128,9 +134,6 @@ private:
 
 	std::unordered_map<std::type_index, natRefPointer<IType>> m_TypeTable;
 };
-
-#undef INITIALIZEBOXEDOBJECT
-#define INITIALIZEBOXEDOBJECT(type, alias) typedef BoxedObject<type> alias;
 
 #include "Object.h"
 
@@ -233,6 +236,9 @@ T& Object::Unbox()
 
 	nat_Throw(ReflectionException, _T("Type wrong."));
 }
+
+#undef INITIALIZEBOXEDOBJECT
+#define INITIALIZEBOXEDOBJECT(type, alias) typedef BoxedObject<type> alias;
 
 INITIALIZEBOXEDOBJECT(char, Char);
 INITIALIZEBOXEDOBJECT(wchar_t, WChar);

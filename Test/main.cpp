@@ -7,7 +7,9 @@ DECLARE_REFLECTABLE_CLASS(Foo)
 public:
 	GENERATE_METADATA(Foo);
 
-	DECLARE_CONSTRUCTOR(Foo, 0, int);
+	DECLARE_CONSTRUCTOR(Foo, , int);
+	//DECLARE_DEFAULT_COPYCONSTRUCTOR(Foo);
+	//DECLARE_DEFAULT_MOVECONSTRUCTOR(Foo);
 	DECLARE_CONST_MEMBER_METHOD(Foo, GetTest, 0, int);
 	DECLARE_CONST_MEMBER_METHOD(Foo, GetTest, 1, int, int);
 
@@ -22,10 +24,13 @@ Foo::Foo(int value)
 {
 }
 
-DEFINE_CONSTRUCTOR(Foo, 0, int)(int value)
+DEFINE_CONSTRUCTOR(Foo, , int)(int value)
 {
 	return make_ref<Foo>(value);
 }
+
+//DEFINE_DEFAULT_COPYCONSTRUCTOR(Foo)
+//DEFINE_DEFAULT_MOVECONSTRUCTOR(Foo)
 
 DEFINE_CONST_MEMBER_METHOD(Foo, GetTest, 0, int)() const
 {
