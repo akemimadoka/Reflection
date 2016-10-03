@@ -5,9 +5,9 @@
 DECLARE_REFLECTABLE_CLASS(Foo)
 {
 public:
-	GENERATE_METADATA(Foo);
+	GENERATE_METADATA(Foo)
 
-	DECLARE_CONSTRUCTOR(Foo, , int);
+	DECLARE_EXPLICIT_CONSTRUCTOR(Foo, , int);
 	DECLARE_DEFAULT_COPYCONSTRUCTOR(Foo);
 	DECLARE_DEFAULT_MOVECONSTRUCTOR(Foo);
 	DECLARE_CONST_MEMBER_METHOD(Foo, GetTest, 0, int);
@@ -51,7 +51,7 @@ int main()
 		auto type = Reflection::GetInstance().GetType(_T("Foo"));
 		std::wcout << type->GetName() << std::endl;
 		auto pFoo = type->Construct({ 1 });
-		std::wcout << type->InvokeMember(pFoo, _T("GetTest"), {})->Unbox<int>() << std::endl << type->InvokeMember(pFoo, _T("GetTest"), {1})->Unbox<int>() << std::endl;
+		std::wcout << type->InvokeMember(pFoo, _T("GetTest"), {})->ToString() << std::endl << type->InvokeMember(pFoo, _T("GetTest"), {1})->ToString() << std::endl;
 		std::vector<nTString> members{};
 		type->EnumMember([&members](ncTStr name, bool isMethod, natRefPointer<IType> objectType)
 		{
@@ -62,7 +62,7 @@ int main()
 		{
 			std::wcout << item << std::endl;
 		}
-		std::wcout << type->ReadMemberField(pFoo, _T("m_Test"))->Unbox<int>() << std::endl;
+		std::wcout << type->ReadMemberField(pFoo, _T("m_Test"))->ToString() << std::endl;
 	}
 	catch (std::exception& e)
 	{

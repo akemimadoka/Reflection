@@ -3,6 +3,18 @@
 #include "Object.h"
 
 template <typename T>
+struct IsRefPointer
+	: std::false_type
+{
+};
+
+template <typename T>
+struct IsRefPointer<natRefPointer<T>>
+	: std::true_type
+{
+};
+
+template <typename T>
 class NonMemberField;
 
 template <typename T>
@@ -20,6 +32,11 @@ public:
 	natRefPointer<IType> GetType() override
 	{
 		return m_Field->GetType();
+	}
+
+	bool IsPointer() const noexcept override
+	{
+		return IsRefPointer<T>::value;
 	}
 
 	natRefPointer<Object> Read() override
@@ -54,6 +71,11 @@ public:
 	natRefPointer<IType> GetType() override
 	{
 		return Reflection::GetInstance().GetType<boxed_type_t<T>>();
+	}
+
+	bool IsPointer() const noexcept override
+	{
+		return IsRefPointer<T>::value;
 	}
 
 	natRefPointer<Object> ReadFrom(natRefPointer<Object> object) override

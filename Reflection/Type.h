@@ -82,6 +82,28 @@ public:
 		nat_Throw(ReflectionException, _T("None of overloaded member method named {0} can be invoked with given args."), name);
 	}
 
+	bool IsNonMemberFieldPointer(ncTStr name) override
+	{
+		auto iter = m_NonMemberFieldMap.find(name);
+		if (iter == m_NonMemberFieldMap.end())
+		{
+			nat_Throw(ReflectionException, _T("No such member field named {0}."), name);
+		}
+
+		return iter->second->IsPointer();
+	}
+
+	bool IsMemberFieldPointer(ncTStr name) override
+	{
+		auto iter = m_MemberFieldMap.find(name);
+		if (iter == m_MemberFieldMap.end())
+		{
+			nat_Throw(ReflectionException, _T("No such member field named {0}."), name);
+		}
+
+		return iter->second->IsPointer();
+	}
+
 	natRefPointer<Object> ReadNonMemberField(ncTStr name) override
 	{
 		auto iter = m_NonMemberFieldMap.find(name);
@@ -177,10 +199,9 @@ public:
 	}
 
 	// TODO: Implement converting function
-	bool IsConvertable(natRefPointer<IType> other) const noexcept override
+	/*bool IsConvertable(natRefPointer<IType> other) const noexcept override
 	{
-		return true;
-	}
+	}*/
 
 	natRefPointer<Object> ConvertTo(natRefPointer<Object> object, natRefPointer<IType> toType) const override
 	{
@@ -193,6 +214,44 @@ public:
 	}
 
 private:
+	bool CompatWithNonMember(ncTStr name, ArgumentPack const& args) const noexcept
+	{
+		auto range = m_NonMemberMethodMap.equal_range(name);
+		if (range.first == range.second)
+		{
+			return false;
+		}
+
+		for (auto&& item : make_range(range.first, range.second))
+		{
+			if (item.second->CompatWith(args))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	bool CompatWithMember(ncTStr name, ArgumentPack const& args) const noexcept
+	{
+		auto range = m_MemberMethodMap.equal_range(name);
+		if (range.first == range.second)
+		{
+			return false;
+		}
+
+		for (auto&& item : make_range(range.first, range.second))
+		{
+			if (item.second->CompatWith(args))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	std::unordered_multimap<nTString, natRefPointer<IMethod>> m_NonMemberMethodMap;
 	std::unordered_multimap<nTString, natRefPointer<IMemberMethod>> m_MemberMethodMap;
 	std::unordered_map<nTString, natRefPointer<IField>> m_NonMemberFieldMap;

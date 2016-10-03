@@ -40,6 +40,7 @@ struct IField
 	: Interface
 {
 	virtual natRefPointer<IType> GetType() = 0;
+	virtual bool IsPointer() const noexcept = 0;
 	virtual natRefPointer<Object> Read() = 0;
 	virtual void Write(natRefPointer<Object> value) = 0;
 };
@@ -48,6 +49,7 @@ struct IMemberField
 	: Interface
 {
 	virtual natRefPointer<IType> GetType() = 0;
+	virtual bool IsPointer() const noexcept = 0;
 	virtual natRefPointer<Object> ReadFrom(natRefPointer<Object> object) = 0;
 	virtual void WriteFrom(natRefPointer<Object> object, natRefPointer<Object> value) = 0;
 };
@@ -67,6 +69,8 @@ struct IType
 	virtual natRefPointer<Object> Construct(ArgumentPack const& args) = 0;
 	virtual natRefPointer<Object> InvokeNonMember(ncTStr name, ArgumentPack const& args) = 0;
 	virtual natRefPointer<Object> InvokeMember(natRefPointer<Object> object, ncTStr name, ArgumentPack const& args) = 0;
+	virtual bool IsNonMemberFieldPointer(ncTStr name) = 0;
+	virtual bool IsMemberFieldPointer(ncTStr name) = 0;
 	virtual natRefPointer<Object> ReadNonMemberField(ncTStr name) = 0;
 	virtual natRefPointer<Object> ReadMemberField(natRefPointer<Object> object, ncTStr name) = 0;
 	virtual void WriteNonMemberField(ncTStr name, natRefPointer<Object> value) = 0;
@@ -85,6 +89,6 @@ struct IType
 	virtual std::type_index GetTypeIndex() const noexcept = 0;
 	virtual bool Equal(const IType* other) const noexcept = 0;
 
-	virtual bool IsConvertable(natRefPointer<IType> other) const noexcept = 0;
-	virtual natRefPointer<Object> ConvertTo(natRefPointer<Object> object, NatsuLib::natRefPointer<IType> toType) const = 0;
+	//virtual bool IsConvertable(natRefPointer<IType> other) const noexcept = 0;
+	virtual natRefPointer<Object> ConvertTo(natRefPointer<Object> object, natRefPointer<IType> toType) const = 0;
 };

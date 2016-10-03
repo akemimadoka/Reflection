@@ -1,5 +1,11 @@
 #include "Reflection.h"
 
+#ifdef _UNICODE
+#define toTString std::to_wstring
+#else
+#define toTString std::to_string
+#endif
+
 natRefPointer<IType> Reflection::GetType(ncTStr typeName)
 {
 	for (auto&& item : m_TypeTable)
@@ -37,6 +43,74 @@ INITIALIZEBOXEDOBJECT(uint64_t, ULong);
 INITIALIZEBOXEDOBJECT(float, Float);
 INITIALIZEBOXEDOBJECT(double, Double);
 INITIALIZEBOXEDOBJECT(void, Void);
+
+nTString Char::_toString(const Char* pThis) noexcept
+{
+#ifdef _UNICODE
+	return natUtil::C2Wstr(std::string{ pThis->m_Obj });
+#else
+	return { pThis->m_Obj };
+#endif
+}
+
+nTString WChar::_toString(const WChar* pThis) noexcept
+{
+#ifdef _UNICODE
+	return { pThis->m_Obj };
+#else
+	return natUtil::W2Cstr(std::wstring{ pThis->m_Obj });
+#endif	
+}
+
+nTString SByte::_toString(const SByte* pThis) noexcept
+{
+	return toTString(pThis->m_Obj);
+}
+
+nTString Byte::_toString(const Byte* pThis) noexcept
+{
+	return toTString(pThis->m_Obj);
+}
+
+nTString Short::_toString(const Short* pThis) noexcept
+{
+	return toTString(pThis->m_Obj);
+}
+
+nTString UShort::_toString(const UShort* pThis) noexcept
+{
+	return toTString(pThis->m_Obj);
+}
+
+nTString Integer::_toString(const Integer* pThis) noexcept
+{
+	return toTString(pThis->m_Obj);
+}
+
+nTString UInteger::_toString(const UInteger* pThis) noexcept
+{
+	return toTString(pThis->m_Obj);
+}
+
+nTString Long::_toString(const Long* pThis) noexcept
+{
+	return toTString(pThis->m_Obj);
+}
+
+nTString ULong::_toString(const ULong* pThis) noexcept
+{
+	return toTString(pThis->m_Obj);
+}
+
+nTString Float::_toString(const Float* pThis) noexcept
+{
+	return toTString(pThis->m_Obj);
+}
+
+nTString Double::_toString(const Double* pThis) noexcept
+{
+	return toTString(pThis->m_Obj);
+}
 
 natRefPointer<Object> Object::Box()
 {

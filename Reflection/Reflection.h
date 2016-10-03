@@ -13,11 +13,11 @@ using namespace NatsuLib;
 
 #define GENERATE_METADATA(classname) typedef classname _Self_t;\
 static Reflection::ReflectionClassRegister<_Self_t> _s_RefectionHelper_##classname;\
-static ncTStr GetName()\
+static ncTStr GetName() noexcept\
 {\
 	return _T(#classname);\
 }\
-natRefPointer<IType> GetType() override\
+natRefPointer<IType> GetType() const noexcept override\
 {\
 	return Reflection::GetInstance().GetType<_Self_t>();\
 }
@@ -35,6 +35,10 @@ returntype classname::methodname
 #define DECLARE_CONSTRUCTOR(classname, id, ...) static Reflection::ReflectionNonMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_NonMemberMethod_##Constructor##id##_;\
 static natRefPointer<Object> Constructor(__VA_ARGS__);\
 classname(__VA_ARGS__)
+
+#define DECLARE_EXPLICIT_CONSTRUCTOR(classname, id, ...) static Reflection::ReflectionNonMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_NonMemberMethod_##Constructor##id##_;\
+static natRefPointer<Object> Constructor(__VA_ARGS__);\
+explicit classname(__VA_ARGS__)
 
 #define DEFINE_CONSTRUCTOR(classname, id, ...) Reflection::ReflectionNonMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberMethod_##Constructor##id##_{ _T("Constructor"), static_cast<natRefPointer<Object>(*)(__VA_ARGS__)>(&Constructor) };\
 natRefPointer<Object> classname::Constructor
@@ -57,16 +61,45 @@ returntype methodname(__VA_ARGS__) const
 #define DEFINE_CONST_MEMBER_METHOD(classname, methodname, id, returntype, ...) Reflection::ReflectionMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_Const_MemberMethod_##methodname##_##returntype##_##id##_{ _T(#methodname), static_cast<returntype(classname::*)(__VA_ARGS__) const>(&classname::methodname) };\
 returntype classname::methodname
 
+#define DECLARE_CONVERSION_OPERATOR(classname, targettype) DECLARE_MEMBER_METHOD(classname, ConvertTo##targettype, , natRefPointer<Object>);\
+operator targettype()
+
+#define DEFINE_CONVERSION_OPERATOR(classname, targettype) DEFINE_MEMBER_METHOD(classname, ConvertTo##targettype, , natRefPointer<Object>)(){ return this->operator targettype(); }\
+classname::operator targettype()
+
+#define DECLARE_CONST_CONVERSION_OPERATOR(classname, targettype) DECLARE_CONST_MEMBER_METHOD(classname, ConvertTo##targettype, , natRefPointer<Object>);\
+operator targettype() const
+
+#define DEFINE_CONST_CONVERSION_OPERATOR(classname, targettype) DEFINE_CONST_MEMBER_METHOD(classname, ConvertTo##targettype, , natRefPointer<Object>)() const { return this->operator targettype(); }\
+classname::operator targettype() const
+
+#define DECLARE_EXPLICIT_CONVERSION_OPERATOR(classname, targettype) DECLARE_MEMBER_METHOD(classname, ConvertTo##targettype, , natRefPointer<Object>);\
+explicit operator targettype()
+
+#define DECLARE_EXPLICIT_CONST_CONVERSION_OPERATOR(classname, targettype) DECLARE_CONST_MEMBER_METHOD(classname, ConvertTo##targettype, , natRefPointer<Object>);\
+explicit operator targettype() const
+
 #define DECLARE_NONMEMBER_FIELD(classname, fieldtype, fieldname) static Reflection::ReflectionNonMemberFieldRegister<classname> _s_ReflectionHelper_##classname##_NonMemberField_##fieldtype##_##fieldname##_;\
 static fieldtype fieldname
 
 #define DEFINE_NONMEMBER_FIELD(classname, fieldtype, fieldname) Reflection::ReflectionNonMemberFieldRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberField_##fieldtype##_##fieldname##_{ _T(#fieldname), &classname::fieldname };\
 fieldtype classname::fieldname
 
+#define DECLARE_NONMEMBER_POINTER_FIELD(classname, pointertotype, fieldname) static Reflection::ReflectionNonMemberFieldRegister<classname> _s_ReflectionHelper_##classname##_NonMemberPointerField_##pointertotype##_##fieldname##_;\
+static natRefPointer<pointertotype> fieldname
+
+#define DEFINE_NONMEMBER_POINTER_FIELD(classname, pointertotype, fieldname) Reflection::ReflectionNonMemberFieldRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberPointerField_##pointertotype##_##fieldname##_{ _T(#fieldname), &classname::fieldname };\
+natRefPointer<pointertotype> classname::fieldname
+
 #define DECLARE_MEMBER_FIELD(classname, fieldtype, fieldname) static Reflection::ReflectionMemberFieldRegister<classname> _s_ReflectionHelper_##classname##_MemberField_##fieldtype##_##fieldname##_;\
 fieldtype fieldname
 
 #define DEFINE_MEMBER_FIELD(classname, fieldtype, fieldname) Reflection::ReflectionMemberFieldRegister<classname> classname::_s_ReflectionHelper_##classname##_MemberField_##fieldtype##_##fieldname##_{ _T(#fieldname), &classname::fieldname }
+
+#define DECLARE_MEMBER_POINTER_FIELD(classname, pointertotype, fieldname) static Reflection::ReflectionMemberFieldRegister<classname> _s_ReflectionHelper_##classname##_MemberPointerField_##pointertotype##_##fieldname##_;\
+natRefPointer<pointertotype> fieldname
+
+#define DEFINE_MEMBER_POINTER_FIELD(classname, pointertotype, fieldname) Reflection::ReflectionMemberFieldRegister<classname> classname::_s_ReflectionHelper_##classname##_MemberPointerField_##pointertotype##_##fieldname##_{ _T(#fieldname), &classname::fieldname }
 
 #define typeof(expression) Reflection::GetInstance().GetType<decltype(expression)>()
 
@@ -221,12 +254,19 @@ public:
 		return m_Obj;
 	}
 
+	nTString ToString() const noexcept override
+	{
+		return _toString(this);
+	}
+
 	std::type_index GetUnboxedType() override
 	{
 		return typeid(T);
 	}
 
 private:
+	static nTString _toString(const BoxedObject* pThis) noexcept;
+
 	void* _getUnsafePtr() override
 	{
 		return &m_Obj;
@@ -246,9 +286,14 @@ public:
 	{
 		return _T("BoxedObject<void>");
 	}
-	natRefPointer<IType> GetType() override
+	natRefPointer<IType> GetType() const noexcept override
 	{
 		return Reflection::GetInstance().GetType<_Self_t>();
+	}
+
+	nTString ToString() const noexcept override
+	{
+		return _T("void");
 	}
 
 	std::type_index GetUnboxedType() override

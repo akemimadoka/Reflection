@@ -6,7 +6,11 @@ using namespace NatsuLib;
 struct Object
 	: natRefObjImpl<Interface>
 {
-	virtual natRefPointer<IType> GetType() = 0;
+	virtual natRefPointer<IType> GetType() const noexcept = 0;
+	virtual nTString ToString() const noexcept
+	{
+		return GetType()->GetName();
+	}
 
 	virtual std::type_index GetUnboxedType()
 	{
