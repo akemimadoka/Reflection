@@ -3,6 +3,16 @@
 #include "Object.h"
 #include <deque>
 
+namespace detail_
+{
+	struct forward_call_t
+	{
+		constexpr forward_call_t() noexcept = default;
+	};
+
+	constexpr forward_call_t forward_call;
+}
+
 class ArgumentPack
 {
 public:
@@ -64,6 +74,45 @@ private:
 	}
 };
 
+template <typename Ret, typename... Args>
+struct MethodHelper<Ret(*)(detail_::forward_call_t, std::tuple<Args...>&&)>
+{
+	typedef Ret(*MethodType)(detail_::forward_call_t, std::tuple<Args...>&&);
+
+	static decltype(auto) InvokeWithArgs(MethodType method, Args... args)
+	{
+		return method(detail_::forward_call, std::forward_as_tuple(static_cast<Args>(args)...));
+	}
+
+	static decltype(auto) InvokeWithArgPack(MethodType method, ArgumentPack const& pack)
+	{
+		return InvokeWithArgPackHelper(method, pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
+	}
+
+	static natRefPointer<Object> Invoke(MethodType method, ArgumentPack const& pack)
+	{
+		return Object::Box(InvokeWithArgPack(method, pack));
+	}
+
+	static bool CompatWith(ArgumentPack const& pack)
+	{
+		return CompatWithImpl(pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
+	}
+
+private:
+	template <size_t... i>
+	static decltype(auto) InvokeWithArgPackHelper(MethodType method, ArgumentPack const& pack, std::index_sequence<i...>)
+	{
+		return InvokeWithArgs(method, static_cast<Args>(pack.Get(i)->Unbox<std::remove_cv_t<std::remove_reference_t<Args>>>())...);
+	}
+
+	template <size_t... i>
+	static bool CompatWithImpl(ArgumentPack const& pack, std::index_sequence<i...>)
+	{
+		return pack.Size() == sizeof...(i) && std::make_tuple((pack.GetType(i)->GetTypeIndex() == typeid(boxed_type_t<Args>))...) == std::make_tuple(std::bool_constant<i >= 0>::value...);
+	}
+};
+
 template <typename... Args>
 struct MethodHelper<void(*)(Args...)>
 {
@@ -76,8 +125,47 @@ struct MethodHelper<void(*)(Args...)>
 
 	static decltype(auto) InvokeWithArgPack(MethodType method, ArgumentPack const& pack)
 	{
-		typedef typename std::make_index_sequence<sizeof...(Args)>::type indexseq;
-		return InvokeWithArgPackHelper(method, pack, indexseq{});
+		return InvokeWithArgPackHelper(method, pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
+	}
+
+	static natRefPointer<Object> Invoke(MethodType method, ArgumentPack const& pack)
+	{
+		InvokeWithArgPack(method, pack);
+		return Object::Box();
+	}
+
+	static bool CompatWith(ArgumentPack const& pack)
+	{
+		return CompatWithImpl(pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
+	}
+
+private:
+	template <size_t... i>
+	static decltype(auto) InvokeWithArgPackHelper(MethodType method, ArgumentPack const& pack, std::index_sequence<i...>)
+	{
+		return InvokeWithArgs(method, static_cast<Args>(pack.Get(i)->Unbox<std::remove_cv_t<std::remove_reference_t<Args>>>())...);
+	}
+
+	template <size_t... i>
+	static bool CompatWithImpl(ArgumentPack const& pack, std::index_sequence<i...>)
+	{
+		return pack.Size() == sizeof...(i) && std::make_tuple((pack.GetType(i)->GetTypeIndex() == typeid(boxed_type_t<Args>))...) == std::make_tuple(std::bool_constant<i >= 0>::value...);
+	}
+};
+
+template <typename... Args>
+struct MethodHelper<void(*)(detail_::forward_call_t, std::tuple<Args...>&&)>
+{
+	typedef void(*MethodType)(detail_::forward_call_t, std::tuple<Args...>&&);
+
+	static decltype(auto) InvokeWithArgs(MethodType method, Args... args)
+	{
+		return method(detail_::forward_call, std::forward_as_tuple(static_cast<Args>(args)...));
+	}
+
+	static decltype(auto) InvokeWithArgPack(MethodType method, ArgumentPack const& pack)
+	{
+		return InvokeWithArgPackHelper(method, pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
 	}
 
 	static natRefPointer<Object> Invoke(MethodType method, ArgumentPack const& pack)
@@ -117,8 +205,46 @@ struct MethodHelper<Ret(Class::*)(Args...)>
 
 	static decltype(auto) InvokeWithArgPack(Class* object, MethodType method, ArgumentPack const& pack)
 	{
-		typedef typename std::make_index_sequence<sizeof...(Args)>::type indexseq;
-		return InvokeWithArgPackHelper(object, method, pack, indexseq{});
+		return InvokeWithArgPackHelper(object, method, pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
+	}
+
+	static natRefPointer<Object> Invoke(natRefPointer<Object> object, MethodType method, ArgumentPack const& pack)
+	{
+		return Object::Box(InvokeWithArgPack(&object->Unbox<Class>(), method, pack));
+	}
+
+	static bool CompatWith(natRefPointer<Object> object, ArgumentPack const& pack)
+	{
+		return object->GetType()->GetTypeIndex() == typeid(Class) && CompatWithImpl(pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
+	}
+
+private:
+	template <size_t... i>
+	static decltype(auto) InvokeWithArgPackHelper(Class* object, MethodType method, ArgumentPack const& pack, std::index_sequence<i...>)
+	{
+		return InvokeWithArgs(object, method, static_cast<Args>(pack.Get(i)->Unbox<std::remove_cv_t<std::remove_reference_t<Args>>>())...);
+	}
+
+	template <size_t... i>
+	static bool CompatWithImpl(ArgumentPack const& pack, std::index_sequence<i...>)
+	{
+		return pack.Size() == sizeof...(i) && std::make_tuple((pack.GetType(i)->GetTypeIndex() == typeid(boxed_type_t<Args>))...) == std::make_tuple(std::bool_constant<i >= 0>::value...);
+	}
+};
+
+template <typename Ret, typename Class, typename... Args>
+struct MethodHelper<Ret(Class::*)(detail_::forward_call_t, std::tuple<Args...>&&)>
+{
+	typedef Ret(Class::*MethodType)(detail_::forward_call_t, std::tuple<Args...>&&);
+
+	static decltype(auto) InvokeWithArgs(Class* object, MethodType method, Args... args)
+	{
+		return (object->*method)(detail_::forward_call, std::forward_as_tuple(static_cast<Args>(args)...));
+	}
+
+	static decltype(auto) InvokeWithArgPack(Class* object, MethodType method, ArgumentPack const& pack)
+	{
+		return InvokeWithArgPackHelper(object, method, pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
 	}
 
 	static natRefPointer<Object> Invoke(natRefPointer<Object> object, MethodType method, ArgumentPack const& pack)
@@ -157,8 +283,47 @@ struct MethodHelper<void (Class::*)(Args...)>
 
 	static decltype(auto) InvokeWithArgPack(Class* object, MethodType method, ArgumentPack const& pack)
 	{
-		typedef typename std::make_index_sequence<sizeof...(Args)>::type indexseq;
-		return InvokeWithArgPackHelper(object, method, pack, indexseq{});
+		return InvokeWithArgPackHelper(object, method, pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
+	}
+
+	static natRefPointer<Object> Invoke(natRefPointer<Object> object, MethodType method, ArgumentPack const& pack)
+	{
+		InvokeWithArgPack(&object->Unbox<Class>(), method, pack);
+		return Object::Box();
+	}
+
+	static bool CompatWith(natRefPointer<Object> object, ArgumentPack const& pack)
+	{
+		return object->GetType()->GetTypeIndex() == typeid(Class) && CompatWithImpl(pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
+	}
+
+private:
+	template <size_t... i>
+	static decltype(auto) InvokeWithArgPackHelper(Class* object, MethodType method, ArgumentPack const& pack, std::index_sequence<i...>)
+	{
+		return InvokeWithArgs(object, method, static_cast<Args>(pack.Get(i)->Unbox<std::remove_cv_t<std::remove_reference_t<Args>>>())...);
+	}
+
+	template <size_t... i>
+	static bool CompatWithImpl(ArgumentPack const& pack, std::index_sequence<i...>)
+	{
+		return pack.Size() == sizeof...(i) && std::make_tuple((pack.GetType(i)->GetTypeIndex() == typeid(boxed_type_t<Args>))...) == std::make_tuple(std::bool_constant<i >= 0>::value...);
+	}
+};
+
+template <typename Class, typename... Args>
+struct MethodHelper<void(Class::*)(detail_::forward_call_t, std::tuple<Args...>&&)>
+{
+	typedef void(Class::*MethodType)(detail_::forward_call_t, std::tuple<Args...>&&);
+
+	static decltype(auto) InvokeWithArgs(Class* object, MethodType method, Args... args)
+	{
+		return (object->*method)(detail_::forward_call, std::forward_as_tuple(static_cast<Args>(args)...));
+	}
+
+	static decltype(auto) InvokeWithArgPack(Class* object, MethodType method, ArgumentPack const& pack)
+	{
+		return InvokeWithArgPackHelper(object, method, pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
 	}
 
 	static natRefPointer<Object> Invoke(natRefPointer<Object> object, MethodType method, ArgumentPack const& pack)
@@ -198,8 +363,46 @@ struct MethodHelper<Ret(Class::*)(Args...) const>
 
 	static decltype(auto) InvokeWithArgPack(const Class* object, MethodType method, ArgumentPack const& pack)
 	{
-		typedef typename std::make_index_sequence<sizeof...(Args)>::type indexseq;
-		return InvokeWithArgPackHelper(object, method, pack, indexseq{});
+		return InvokeWithArgPackHelper(object, method, pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
+	}
+
+	static natRefPointer<Object> Invoke(natRefPointer<Object> object, MethodType method, ArgumentPack const& pack)
+	{
+		return Object::Box(InvokeWithArgPack(&object->Unbox<Class>(), method, pack));
+	}
+
+	static bool CompatWith(natRefPointer<Object> object, ArgumentPack const& pack)
+	{
+		return object->GetType()->GetTypeIndex() == typeid(Class) && CompatWithImpl(pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
+	}
+
+private:
+	template <size_t... i>
+	static decltype(auto) InvokeWithArgPackHelper(const Class* object, MethodType method, ArgumentPack const& pack, std::index_sequence<i...>)
+	{
+		return InvokeWithArgs(object, method, static_cast<Args>(pack.Get(i)->Unbox<std::remove_cv_t<std::remove_reference_t<Args>>>())...);
+	}
+
+	template <size_t... i>
+	static bool CompatWithImpl(ArgumentPack const& pack, std::index_sequence<i...>)
+	{
+		return pack.Size() == sizeof...(i) && std::make_tuple((pack.GetType(i)->GetTypeIndex() == typeid(boxed_type_t<Args>))...) == std::make_tuple(std::bool_constant<i >= 0>::value...);
+	}
+};
+
+template <typename Ret, typename Class, typename... Args>
+struct MethodHelper<Ret(Class::*)(detail_::forward_call_t, std::tuple<Args...>&&) const>
+{
+	typedef Ret(Class::*MethodType)(detail_::forward_call_t, std::tuple<Args...>&&) const;
+
+	static decltype(auto) InvokeWithArgs(const Class* object, MethodType method, Args... args)
+	{
+		return (object->*method)(detail_::forward_call, std::forward_as_tuple(static_cast<Args>(args)...));
+	}
+
+	static decltype(auto) InvokeWithArgPack(const Class* object, MethodType method, ArgumentPack const& pack)
+	{
+		return InvokeWithArgPackHelper(object, method, pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
 	}
 
 	static natRefPointer<Object> Invoke(natRefPointer<Object> object, MethodType method, ArgumentPack const& pack)
@@ -238,8 +441,7 @@ struct MethodHelper<void (Class::*)(Args...) const>
 
 	static decltype(auto) InvokeWithArgPack(const Class* object, MethodType method, ArgumentPack const& pack)
 	{
-		typedef typename std::make_index_sequence<sizeof...(Args)>::type indexseq;
-		return InvokeWithArgPackHelper(object, method, pack, indexseq{});
+		return InvokeWithArgPackHelper(object, method, pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
 	}
 
 	static natRefPointer<Object> Invoke(natRefPointer<Object> object, MethodType method, ArgumentPack const& pack)
@@ -258,6 +460,46 @@ private:
 	static decltype(auto) InvokeWithArgPackHelper(const Class* object, MethodType method, ArgumentPack const& pack, std::index_sequence<i...>)
 	{
 		return InvokeWithArgs(object, method, std::forward<Args>(pack.Get(i)->Unbox<std::remove_cv_t<std::remove_reference_t<Args>>>())...);
+	}
+
+	template <size_t... i>
+	static bool CompatWithImpl(ArgumentPack const& pack, std::index_sequence<i...>)
+	{
+		return pack.Size() == sizeof...(i) && std::make_tuple((pack.GetType(i)->GetTypeIndex() == typeid(boxed_type_t<Args>))...) == std::make_tuple(std::bool_constant<i >= 0>::value...);
+	}
+};
+
+template <typename Class, typename... Args>
+struct MethodHelper<void(Class::*)(detail_::forward_call_t, std::tuple<Args...>&&) const>
+{
+	typedef void(Class::*MethodType)(detail_::forward_call_t, std::tuple<Args...>&&) const;
+
+	static decltype(auto) InvokeWithArgs(const Class* object, MethodType method, Args... args)
+	{
+		return (object->*method)(detail_::forward_call, std::forward_as_tuple(static_cast<Args>(args)...));
+	}
+
+	static decltype(auto) InvokeWithArgPack(const Class* object, MethodType method, ArgumentPack const& pack)
+	{
+		return InvokeWithArgPackHelper(object, method, pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
+	}
+
+	static natRefPointer<Object> Invoke(natRefPointer<Object> object, MethodType method, ArgumentPack const& pack)
+	{
+		InvokeWithArgPack(&object->Unbox<Class>(), method, pack);
+		return Object::Box();
+	}
+
+	static bool CompatWith(natRefPointer<Object> object, ArgumentPack const& pack)
+	{
+		return object->GetType()->GetTypeIndex() == typeid(Class) && CompatWithImpl(pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
+	}
+
+private:
+	template <size_t... i>
+	static decltype(auto) InvokeWithArgPackHelper(const Class* object, MethodType method, ArgumentPack const& pack, std::index_sequence<i...>)
+	{
+		return InvokeWithArgs(object, method, static_cast<Args>(pack.Get(i)->Unbox<std::remove_cv_t<std::remove_reference_t<Args>>>())...);
 	}
 
 	template <size_t... i>

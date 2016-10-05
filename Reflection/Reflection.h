@@ -25,59 +25,94 @@ natRefPointer<IType> GetType() const noexcept override\
 #define GENERATE_METADATA_DEFINITION(classname) Reflection::ReflectionClassRegister<classname> classname::_s_RefectionHelper_##classname
 
 #define DECLARE_REFLECTABLE_CLASS(classname) class classname : virtual public Object
+#define DECLARE_REFLECTABLE_CLASS_WITH_BASE_CLASS(classname, baseclass) class classname : public std::enable_if_t<std::is_base_of<Object, baseclass>::value, baseclass>
 
-#define DECLARE_NONMEMBER_METHOD(classname, methodname, id, returntype, ...) static Reflection::ReflectionNonMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_NonMemberMethod_##methodname##_##returntype##_##id##_;\
+#define DECLARE_NONMEMBER_METHOD(classname, methodname, id, returntype, ...) static Reflection::ReflectionNonMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_NonMemberMethod_##methodname##_##id##_;\
 static returntype methodname(__VA_ARGS__) 
 
-#define DEFINE_NONMEMBER_METHOD(classname, methodname, id, returntype, ...) Reflection::ReflectionNonMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberMethod_##methodname##_##returntype##_##id##_{ _T(#methodname), static_cast<returntype(*)(__VA_ARGS__)>(&classname::methodname) };\
+#define DEFINE_NONMEMBER_METHOD(classname, methodname, id, returntype, ...) Reflection::ReflectionNonMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberMethod_##methodname##_##id##_{ _T(#methodname), static_cast<returntype(*)(__VA_ARGS__)>(&classname::methodname) };\
 returntype classname::methodname
 
-#define DECLARE_CONSTRUCTOR(classname, id, ...) static Reflection::ReflectionNonMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_NonMemberMethod_##Constructor##id##_;\
-static natRefPointer<Object> Constructor(__VA_ARGS__);\
-classname(__VA_ARGS__)
+#define DECLARE_CONSTRUCTOR(classname, specifiers, id, ...) static Reflection::ReflectionNonMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_NonMemberMethod_##Constructor##_##id##_;\
+static natRefPointer<Object> Constructor(detail_::forward_call_t, std::tuple<__VA_ARGS__>&&);\
+specifiers classname(__VA_ARGS__)
 
-#define DECLARE_EXPLICIT_CONSTRUCTOR(classname, id, ...) static Reflection::ReflectionNonMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_NonMemberMethod_##Constructor##id##_;\
-static natRefPointer<Object> Constructor(__VA_ARGS__);\
-explicit classname(__VA_ARGS__)
+#define DEFINE_CONSTRUCTOR(classname, specifiers, id, ...) Reflection::ReflectionNonMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberMethod_##Constructor##_##id##_{ _T("Constructor"), static_cast<natRefPointer<Object>(*)(detail_::forward_call_t, std::tuple<__VA_ARGS__>&&)>(&classname::Constructor) };\
+natRefPointer<Object> classname::Constructor(detail_::forward_call_t, std::tuple<__VA_ARGS__>&& args)\
+{\
+	return ::CommonConstructor<classname>(std::move(args), typename std::make_index_sequence<std::tuple_size<std::remove_reference_t<decltype(args)>>::value>::type{});\
+}\
+classname::classname
 
-#define DEFINE_CONSTRUCTOR(classname, id, ...) Reflection::ReflectionNonMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberMethod_##Constructor##id##_{ _T("Constructor"), static_cast<natRefPointer<Object>(*)(__VA_ARGS__)>(&Constructor) };\
-natRefPointer<Object> classname::Constructor
+#define DECLARE_DEFAULT_COPYCONSTRUCTOR(classname) DECLARE_CONSTRUCTOR(classname, , CopyConstructor, classname const&) = default
+#define DEFINE_DEFAULT_COPYCONSTRUCTOR(classname) Reflection::ReflectionNonMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberMethod_##Constructor##_CopyConstructor##_{ _T("Constructor"), static_cast<natRefPointer<Object>(*)(detail_::forward_call_t, std::tuple<classname const&>&&)>(&classname::Constructor) };\
+natRefPointer<Object> classname::Constructor(detail_::forward_call_t, std::tuple<classname const&>&& args)\
+{\
+	return ::CommonConstructor<classname>(std::move(args), typename std::make_index_sequence<std::tuple_size<std::remove_reference_t<decltype(args)>>::value>::type{});\
+}
 
-#define DECLARE_DEFAULT_COPYCONSTRUCTOR(classname) DECLARE_CONSTRUCTOR(classname, CopyConstructor, classname const&) = default
-#define DEFINE_DEFAULT_COPYCONSTRUCTOR(classname) DEFINE_CONSTRUCTOR(classname, CopyConstructor, classname const&)(classname const& other) { return make_ref<classname>(other); }
+#define DECLARE_DEFAULT_MOVECONSTRUCTOR(classname) DECLARE_CONSTRUCTOR(classname, , MoveConstructor, classname &&) = default
+#define DEFINE_DEFAULT_MOVECONSTRUCTOR(classname) Reflection::ReflectionNonMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberMethod_##Constructor##_MoveConstructor##_{ _T("Constructor"), static_cast<natRefPointer<Object>(*)(detail_::forward_call_t, std::tuple<classname &&>&&)>(&classname::Constructor) };\
+natRefPointer<Object> classname::Constructor(detail_::forward_call_t, std::tuple<classname &&>&& args)\
+{\
+	return ::CommonConstructor<classname>(std::move(args), typename std::make_index_sequence<std::tuple_size<std::remove_reference_t<decltype(args)>>::value>::type{});\
+}
 
-#define DECLARE_DEFAULT_MOVECONSTRUCTOR(classname) DECLARE_CONSTRUCTOR(classname, MoveConstructor, classname &&) = default
-#define DEFINE_DEFAULT_MOVECONSTRUCTOR(classname) DEFINE_CONSTRUCTOR(classname, MoveConstructor, classname &&)(classname && other) { return make_ref<classname>(std::move(other)); }
+#define DECLARE_MEMBER_METHOD(classname, specifiers, methodname, id, returntype, ...) static Reflection::ReflectionMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_MemberMethod_##methodname##_##id##_;\
+specifiers returntype methodname(__VA_ARGS__)
 
-#define DECLARE_MEMBER_METHOD(classname, methodname, id, returntype, ...) static Reflection::ReflectionMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_MemberMethod_##methodname##_##returntype##_##id##_;\
-returntype methodname(__VA_ARGS__)
-
-#define DEFINE_MEMBER_METHOD(classname, methodname, id, returntype, ...) Reflection::ReflectionMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_MemberMethod_##methodname##_##returntype##_##id##_{ _T(#methodname), static_cast<returntype(classname::*)(__VA_ARGS__)>(&classname::methodname) };\
+#define DEFINE_MEMBER_METHOD(classname, specifiers, methodname, id, returntype, ...) Reflection::ReflectionMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_MemberMethod_##methodname##_##id##_{ _T(#methodname), static_cast<returntype(classname::*)(__VA_ARGS__)>(&classname::methodname) };\
 returntype classname::methodname
 
-#define DECLARE_CONST_MEMBER_METHOD(classname, methodname, id, returntype, ...) static Reflection::ReflectionMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_Const_MemberMethod_##methodname##_##returntype##_##id##_;\
-returntype methodname(__VA_ARGS__) const
+#define DECLARE_CONST_MEMBER_METHOD(classname, specifiers, methodname, id, returntype, ...) static Reflection::ReflectionMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_Const_MemberMethod_##methodname##_##id##_;\
+specifiers returntype methodname(__VA_ARGS__) const
 
-#define DEFINE_CONST_MEMBER_METHOD(classname, methodname, id, returntype, ...) Reflection::ReflectionMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_Const_MemberMethod_##methodname##_##returntype##_##id##_{ _T(#methodname), static_cast<returntype(classname::*)(__VA_ARGS__) const>(&classname::methodname) };\
+#define DEFINE_CONST_MEMBER_METHOD(classname, specifiers, methodname, id, returntype, ...) Reflection::ReflectionMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_Const_MemberMethod_##methodname##_##id##_{ _T(#methodname), static_cast<returntype(classname::*)(__VA_ARGS__) const>(&classname::methodname) };\
 returntype classname::methodname
 
-#define DECLARE_CONVERSION_OPERATOR(classname, targettype) DECLARE_MEMBER_METHOD(classname, ConvertTo##targettype, , natRefPointer<Object>);\
+#define DECLARE_VIRTUAL_MEMBER_METHOD(classname, specifiers, methodname, id, returntype, ...) static Reflection::ReflectionMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_Virtual_MemberMethod_##methodname##_##id##_;\
+specifiers returntype methodname##_forwarder_(detail_::forward_call_t, std::tuple<__VA_ARGS__>&&);\
+template <typename... Args, size_t... i>\
+specifiers returntype methodname##_forwarder_impl_(std::tuple<Args...>&& argTuple, std::index_sequence<i...>)\
+{\
+	return methodname(std::forward<Args>(std::get<i>(argTuple))...);\
+}\
+virtual specifiers returntype methodname(__VA_ARGS__)
+
+#define DEFINE_VIRTUAL_MEMBER_METHOD(classname, specifiers, methodname, id, returntype, ...) static Reflection::ReflectionMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_Virtual_MemberMethod_##methodname##_##id##_{ _T(#methodname), static_cast<returntype(classname::*)(detail_::forward_call_t, std::tuple<__VA_ARGS__>&&)>(&classname::methodname##_forwarder_) };\
+specifiers returntype classname::methodname##_forwarder_(detail_::forward_call_t, std::tuple<__VA_ARGS__>&& argTuple)\
+{\
+	return methodname##_forwarder_impl_(std::move(argTuple), typename std::make_index_sequence<std::tuple_size<std::remove_reference_t<decltype(argTuple)>>::value>::type{});\
+}\
+specifiers returntype classname::methodname
+
+#define DECLARE_VIRTUAL_CONST_MEMBER_METHOD(classname, specifiers, methodname, id, returntype, ...) static Reflection::ReflectionMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_Virtual_Const_MemberMethod_##methodname##_##id##_;\
+specifiers returntype methodname##_forwarder_(detail_::forward_call_t, std::tuple<__VA_ARGS__>&&) const;\
+template <typename... Args, size_t... i>\
+specifiers returntype methodname##_forwarder_impl_(std::tuple<Args...>&& argTuple, std::index_sequence<i...>) const\
+{\
+	return methodname(std::forward<Args>(std::get<i>(argTuple))...);\
+}\
+virtual specifiers returntype methodname(__VA_ARGS__) const
+
+#define DEFINE_VIRTUAL_CONST_MEMBER_METHOD(classname, specifiers, methodname, id, returntype, ...) static Reflection::ReflectionMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_Virtual_Const_MemberMethod_##methodname##_##id##_{ _T(#methodname), static_cast<returntype(classname::*)(detail_::forward_call_t, std::tuple<__VA_ARGS__>&&) const>(&classname::methodname##_forwarder_) };\
+specifiers returntype classname::methodname##_forwarder_(detail_::forward_call_t, std::tuple<__VA_ARGS__>&& argTuple) const\
+{\
+	return methodname##_forwarder_impl_(std::move(argTuple), typename std::make_index_sequence<std::tuple_size<std::remove_reference_t<decltype(argTuple)>>::value>::type{});\
+}\
+specifiers returntype classname::methodname
+
+#define DECLARE_CONVERSION_OPERATOR(classname, targettype) DECLARE_MEMBER_METHOD(classname, , ConvertTo##targettype, , natRefPointer<Object>);\
 operator targettype()
 
-#define DEFINE_CONVERSION_OPERATOR(classname, targettype) DEFINE_MEMBER_METHOD(classname, ConvertTo##targettype, , natRefPointer<Object>)(){ return this->operator targettype(); }\
+#define DEFINE_CONVERSION_OPERATOR(classname, targettype) DEFINE_MEMBER_METHOD(classname, , ConvertTo##targettype, , natRefPointer<Object>)(){ return this->operator targettype(); }\
 classname::operator targettype()
 
-#define DECLARE_CONST_CONVERSION_OPERATOR(classname, targettype) DECLARE_CONST_MEMBER_METHOD(classname, ConvertTo##targettype, , natRefPointer<Object>);\
+#define DECLARE_CONST_CONVERSION_OPERATOR(classname, targettype) DECLARE_CONST_MEMBER_METHOD(classname, , ConvertTo##targettype, , natRefPointer<Object>);\
 operator targettype() const
 
-#define DEFINE_CONST_CONVERSION_OPERATOR(classname, targettype) DEFINE_CONST_MEMBER_METHOD(classname, ConvertTo##targettype, , natRefPointer<Object>)() const { return this->operator targettype(); }\
+#define DEFINE_CONST_CONVERSION_OPERATOR(classname, targettype) DEFINE_CONST_MEMBER_METHOD(classname, , ConvertTo##targettype, , natRefPointer<Object>)() const { return this->operator targettype(); }\
 classname::operator targettype() const
-
-#define DECLARE_EXPLICIT_CONVERSION_OPERATOR(classname, targettype) DECLARE_MEMBER_METHOD(classname, ConvertTo##targettype, , natRefPointer<Object>);\
-explicit operator targettype()
-
-#define DECLARE_EXPLICIT_CONST_CONVERSION_OPERATOR(classname, targettype) DECLARE_CONST_MEMBER_METHOD(classname, ConvertTo##targettype, , natRefPointer<Object>);\
-explicit operator targettype() const
 
 #define DECLARE_NONMEMBER_FIELD(classname, fieldtype, fieldname) static Reflection::ReflectionNonMemberFieldRegister<classname> _s_ReflectionHelper_##classname##_NonMemberField_##fieldtype##_##fieldname##_;\
 static fieldtype fieldname
@@ -329,7 +364,7 @@ T& Object::Unbox()
 }
 
 #undef INITIALIZEBOXEDOBJECT
-#define INITIALIZEBOXEDOBJECT(type, alias) typedef BoxedObject<type> alias;
+#define INITIALIZEBOXEDOBJECT(type, alias) typedef BoxedObject<type> alias
 
 INITIALIZEBOXEDOBJECT(char, Char);
 INITIALIZEBOXEDOBJECT(wchar_t, WChar);
@@ -351,7 +386,7 @@ std::enable_if_t<std::is_integral<T>::value || std::is_floating_point<T>::value,
 	return make_ref<BoxedObject<T>>(obj);
 }
 
-namespace _detail
+namespace detail_
 {
 	template <typename T, bool test>
 	struct boxed_type_impl
@@ -368,7 +403,7 @@ namespace _detail
 
 template <typename T>
 struct boxed_type
-	: _detail::boxed_type_impl<T, std::is_integral<T>::value || std::is_floating_point<T>::value>
+	: ::detail_::boxed_type_impl<T, std::is_integral<T>::value || std::is_floating_point<T>::value>
 {
 };
 

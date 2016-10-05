@@ -3,6 +3,12 @@
 
 using namespace NatsuLib;
 
+template <typename Class, typename... Args, size_t... i>
+natRefPointer<Object> CommonConstructor(std::tuple<Args...>&& args, std::index_sequence<i...>)
+{
+	return make_ref<Class>(std::forward<Args>(std::get<i>(args))...);
+}
+
 struct Object
 	: natRefObjImpl<Interface>
 {
