@@ -28,7 +28,11 @@ Reflection::~Reflection()
 }
 
 #undef INITIALIZEBOXEDOBJECT
-#define INITIALIZEBOXEDOBJECT(type, alias) Reflection::ReflectionClassRegister<BoxedObject<type>> BoxedObject<type>::_s_RefectionHelper_BoxedObject
+#define INITIALIZEBOXEDOBJECT(type, alias) ncTStr BoxedObject<type>::GetName() noexcept\
+{\
+	return _T("BoxedObject<"## #type ##">");\
+}\
+Reflection::ReflectionClassRegister<BoxedObject<type>> BoxedObject<type>::_s_RefectionHelper_BoxedObject
 
 INITIALIZEBOXEDOBJECT(char, Char);
 INITIALIZEBOXEDOBJECT(wchar_t, WChar);

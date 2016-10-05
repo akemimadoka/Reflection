@@ -250,13 +250,19 @@ private:
 #include "Object.h"
 
 template <typename T>
-class BoxedObject
+class BoxedObject final
 	: public Object
 {
 public:
 	friend struct Object;
 
-	GENERATE_METADATA(BoxedObject)
+	typedef BoxedObject _Self_t;
+	static Reflection::ReflectionClassRegister<_Self_t> _s_RefectionHelper_BoxedObject;
+	static ncTStr GetName() noexcept;
+	natRefPointer<IType> GetType() const noexcept override
+	{
+		return Reflection::GetInstance().GetType<_Self_t>();
+	}
 
 	BoxedObject()
 		: m_Obj{}
@@ -308,16 +314,13 @@ private:
 };
 
 template <>
-class BoxedObject<void>
+class BoxedObject<void> final
 	: public Object
 {
 public:
 	typedef BoxedObject<void> _Self_t;
 	static Reflection::ReflectionClassRegister<_Self_t> _s_RefectionHelper_BoxedObject;
-	static ncTStr GetName()
-	{
-		return _T("BoxedObject<void>");
-	}
+	static ncTStr GetName() noexcept;
 	natRefPointer<IType> GetType() const noexcept override
 	{
 		return Reflection::GetInstance().GetType<_Self_t>();
