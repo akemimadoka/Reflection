@@ -11,15 +11,15 @@ using namespace NatsuLib;
 
 #undef RegisterClass
 
-#define GENERATE_METADATA(classname) typedef classname _Self_t;\
-static Reflection::ReflectionClassRegister<_Self_t> _s_RefectionHelper_##classname;\
+#define GENERATE_METADATA(classname) typedef classname Self_t_;\
+static Reflection::ReflectionClassRegister<Self_t_> _s_RefectionHelper_##classname;\
 static ncTStr GetName() noexcept\
 {\
 	return _T(#classname);\
 }\
 natRefPointer<IType> GetType() const noexcept override\
 {\
-	return Reflection::GetInstance().GetType<_Self_t>();\
+	return Reflection::GetInstance().GetType<Self_t_>();\
 }
 
 #define GENERATE_METADATA_DEFINITION(classname) Reflection::ReflectionClassRegister<classname> classname::_s_RefectionHelper_##classname
@@ -256,12 +256,12 @@ class BoxedObject final
 public:
 	friend struct Object;
 
-	typedef BoxedObject _Self_t;
-	static Reflection::ReflectionClassRegister<_Self_t> _s_RefectionHelper_BoxedObject;
+	typedef BoxedObject Self_t_;
+	static Reflection::ReflectionClassRegister<Self_t_> _s_RefectionHelper_BoxedObject;
 	static ncTStr GetName() noexcept;
 	natRefPointer<IType> GetType() const noexcept override
 	{
-		return Reflection::GetInstance().GetType<_Self_t>();
+		return Reflection::GetInstance().GetType<Self_t_>();
 	}
 
 	BoxedObject()
@@ -318,12 +318,12 @@ class BoxedObject<void> final
 	: public Object
 {
 public:
-	typedef BoxedObject<void> _Self_t;
-	static Reflection::ReflectionClassRegister<_Self_t> _s_RefectionHelper_BoxedObject;
+	typedef BoxedObject<void> Self_t_;
+	static Reflection::ReflectionClassRegister<Self_t_> _s_RefectionHelper_BoxedObject;
 	static ncTStr GetName() noexcept;
 	natRefPointer<IType> GetType() const noexcept override
 	{
-		return Reflection::GetInstance().GetType<_Self_t>();
+		return Reflection::GetInstance().GetType<Self_t_>();
 	}
 
 	nTString ToString() const noexcept override
