@@ -60,6 +60,11 @@ struct MethodHelper<Ret(*)(Args...)>
 		return CompatWithImpl(pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
 	}
 
+	static std::vector<natRefPointer<IType>> GetType()
+	{
+		return{ Reflection::GetInstance().GetType<Ret>(), Reflection::GetInstance().GetType<Args>()... };
+	}
+
 private:
 	template <size_t... i>
 	static decltype(auto) InvokeWithArgPackHelper(MethodType method, ArgumentPack const& pack, std::index_sequence<i...>)
@@ -97,6 +102,11 @@ struct MethodHelper<Ret(*)(detail_::forward_call_t, std::tuple<Args...>&&)>
 	static bool CompatWith(ArgumentPack const& pack)
 	{
 		return CompatWithImpl(pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
+	}
+
+	static std::vector<natRefPointer<IType>> GetType()
+	{
+		return{ Reflection::GetInstance().GetType<Ret>(), Reflection::GetInstance().GetType<Args>()... };
 	}
 
 private:
@@ -139,6 +149,11 @@ struct MethodHelper<void(*)(Args...)>
 		return CompatWithImpl(pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
 	}
 
+	static std::vector<natRefPointer<IType>> GetType()
+	{
+		return{ Reflection::GetInstance().GetType<void>(), Reflection::GetInstance().GetType<Args>()... };
+	}
+
 private:
 	template <size_t... i>
 	static decltype(auto) InvokeWithArgPackHelper(MethodType method, ArgumentPack const& pack, std::index_sequence<i...>)
@@ -177,6 +192,11 @@ struct MethodHelper<void(*)(detail_::forward_call_t, std::tuple<Args...>&&)>
 	static bool CompatWith(ArgumentPack const& pack)
 	{
 		return CompatWithImpl(pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
+	}
+
+	static std::vector<natRefPointer<IType>> GetType()
+	{
+		return{ Reflection::GetInstance().GetType<void>(), Reflection::GetInstance().GetType<Args>()... };
 	}
 
 private:
@@ -218,6 +238,11 @@ struct MethodHelper<Ret(Class::*)(Args...)>
 		return object->GetType()->GetTypeIndex() == typeid(Class) && CompatWithImpl(pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
 	}
 
+	static std::vector<natRefPointer<IType>> GetType()
+	{
+		return{ Reflection::GetInstance().GetType<Ret>(), Reflection::GetInstance().GetType<Class>(), Reflection::GetInstance().GetType<Args>()... };
+	}
+
 private:
 	template <size_t... i>
 	static decltype(auto) InvokeWithArgPackHelper(Class* object, MethodType method, ArgumentPack const& pack, std::index_sequence<i...>)
@@ -255,6 +280,11 @@ struct MethodHelper<Ret(Class::*)(detail_::forward_call_t, std::tuple<Args...>&&
 	static bool CompatWith(natRefPointer<Object> object, ArgumentPack const& pack)
 	{
 		return object->GetType()->GetTypeIndex() == typeid(Class) && CompatWithImpl(pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
+	}
+
+	static std::vector<natRefPointer<IType>> GetType()
+	{
+		return{ Reflection::GetInstance().GetType<Ret>(), Reflection::GetInstance().GetType<Class>(), Reflection::GetInstance().GetType<Args>()... };
 	}
 
 private:
@@ -297,6 +327,11 @@ struct MethodHelper<void (Class::*)(Args...)>
 		return object->GetType()->GetTypeIndex() == typeid(Class) && CompatWithImpl(pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
 	}
 
+	static std::vector<natRefPointer<IType>> GetType()
+	{
+		return{ Reflection::GetInstance().GetType<void>(), Reflection::GetInstance().GetType<Class>(), Reflection::GetInstance().GetType<Args>()... };
+	}
+
 private:
 	template <size_t... i>
 	static decltype(auto) InvokeWithArgPackHelper(Class* object, MethodType method, ArgumentPack const& pack, std::index_sequence<i...>)
@@ -335,6 +370,11 @@ struct MethodHelper<void(Class::*)(detail_::forward_call_t, std::tuple<Args...>&
 	static bool CompatWith(natRefPointer<Object> object, ArgumentPack const& pack)
 	{
 		return object->GetType()->GetTypeIndex() == typeid(Class) && CompatWithImpl(pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
+	}
+
+	static std::vector<natRefPointer<IType>> GetType()
+	{
+		return{ Reflection::GetInstance().GetType<void>(), Reflection::GetInstance().GetType<Class>(), Reflection::GetInstance().GetType<Args>()... };
 	}
 
 private:
@@ -376,6 +416,11 @@ struct MethodHelper<Ret(Class::*)(Args...) const>
 		return object->GetType()->GetTypeIndex() == typeid(Class) && CompatWithImpl(pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
 	}
 
+	static std::vector<natRefPointer<IType>> GetType()
+	{
+		return{ Reflection::GetInstance().GetType<Ret>(), Reflection::GetInstance().GetType<Class>(), Reflection::GetInstance().GetType<Args>()... };
+	}
+
 private:
 	template <size_t... i>
 	static decltype(auto) InvokeWithArgPackHelper(const Class* object, MethodType method, ArgumentPack const& pack, std::index_sequence<i...>)
@@ -413,6 +458,11 @@ struct MethodHelper<Ret(Class::*)(detail_::forward_call_t, std::tuple<Args...>&&
 	static bool CompatWith(natRefPointer<Object> object, ArgumentPack const& pack)
 	{
 		return object->GetType()->GetTypeIndex() == typeid(Class) && CompatWithImpl(pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
+	}
+
+	static std::vector<natRefPointer<IType>> GetType()
+	{
+		return{ Reflection::GetInstance().GetType<Ret>(), Reflection::GetInstance().GetType<Class>(), Reflection::GetInstance().GetType<Args>()... };
 	}
 
 private:
@@ -455,6 +505,11 @@ struct MethodHelper<void (Class::*)(Args...) const>
 		return object->GetType()->GetTypeIndex() == typeid(Class) && CompatWithImpl(pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
 	}
 
+	static std::vector<natRefPointer<IType>> GetType()
+	{
+		return{ Reflection::GetInstance().GetType<void>(), Reflection::GetInstance().GetType<Class>(), Reflection::GetInstance().GetType<Args>()... };
+	}
+
 private:
 	template <size_t... i>
 	static decltype(auto) InvokeWithArgPackHelper(const Class* object, MethodType method, ArgumentPack const& pack, std::index_sequence<i...>)
@@ -495,6 +550,11 @@ struct MethodHelper<void(Class::*)(detail_::forward_call_t, std::tuple<Args...>&
 		return object->GetType()->GetTypeIndex() == typeid(Class) && CompatWithImpl(pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
 	}
 
+	static std::vector<natRefPointer<IType>> GetType()
+	{
+		return{ Reflection::GetInstance().GetType<void>(), Reflection::GetInstance().GetType<Class>(), Reflection::GetInstance().GetType<Args>()... };
+	}
+
 private:
 	template <size_t... i>
 	static decltype(auto) InvokeWithArgPackHelper(const Class* object, MethodType method, ArgumentPack const& pack, std::index_sequence<i...>)
@@ -520,13 +580,8 @@ public:
 	typedef Ret(*MethodType)(Args...);
 
 	explicit NonMemberMethod(MethodType method)
-		: m_Func(method)
+		: m_Func(method), m_Types(MethodHelper<MethodType>::GetType())
 	{
-	}
-
-	bool Match(ArgumentPack const& pack) override
-	{
-		return true;
 	}
 
 	natRefPointer<Object> Invoke(ArgumentPack const& pack) override
@@ -541,7 +596,17 @@ public:
 
 	natRefPointer<IType> GetReturnType() const noexcept override
 	{
-		return Reflection::GetInstance().GetType<Ret>();
+		return m_Types.front();
+	}
+
+	size_t GetArgumentCount() const noexcept override
+	{
+		return m_Types.size() - 1;
+	}
+
+	natRefPointer<IType> GetArgumentType(size_t n) const noexcept override
+	{
+		return m_Types.at(n + 1);
 	}
 
 	MethodType Get() const noexcept
@@ -551,6 +616,7 @@ public:
 
 private:
 	MethodType m_Func;
+	std::vector<natRefPointer<IType>> m_Types;
 };
 
 template <typename Func>
@@ -564,13 +630,8 @@ public:
 	typedef	Ret(Class::*MethodType)(Args...);
 
 	explicit MemberMethod(MethodType method)
-		: m_Func(method)
+		: m_Func(method), m_Types(MethodHelper<MethodType>::GetType())
 	{
-	}
-
-	bool Match(natRefPointer<Object> object, ArgumentPack const& pack) override
-	{
-		return true;
 	}
 
 	natRefPointer<Object> Invoke(natRefPointer<Object> object, ArgumentPack const& pack) override
@@ -585,7 +646,27 @@ public:
 
 	natRefPointer<IType> GetReturnType() const noexcept override
 	{
-		return Reflection::GetInstance().GetType<Ret>();
+		return m_Types.front();
+	}
+
+	natRefPointer<IType> GetClassType() const noexcept override
+	{
+		return m_Types.at(1);
+	}
+
+	size_t GetArgumentCount() const noexcept override
+	{
+		return m_Types.size() - 2;
+	}
+
+	natRefPointer<IType> GetArgumentType(size_t n) const noexcept override
+	{
+		return m_Types.at(n + 2);
+	}
+
+	bool IsConstMemberMethod() const noexcept override
+	{
+		return false;
 	}
 
 	MethodType Get() const noexcept
@@ -595,6 +676,7 @@ public:
 
 private:
 	MethodType m_Func;
+	std::vector<natRefPointer<IType>> m_Types;
 };
 
 template <typename Ret, typename Class, typename... Args>
@@ -605,13 +687,8 @@ public:
 	typedef	Ret(Class::*MethodType)(Args...) const;
 
 	explicit MemberMethod(MethodType method)
-		: m_Func(method)
+		: m_Func(method), m_Types(MethodHelper<MethodType>::GetType())
 	{
-	}
-
-	bool Match(natRefPointer<Object> object, ArgumentPack const& pack) override
-	{
-		return true;
 	}
 
 	natRefPointer<Object> Invoke(natRefPointer<Object> object, ArgumentPack const& pack) override
@@ -626,7 +703,27 @@ public:
 
 	natRefPointer<IType> GetReturnType() const noexcept override
 	{
-		return Reflection::GetInstance().GetType<Ret>();
+		return m_Types.front();
+	}
+
+	natRefPointer<IType> GetClassType() const noexcept override
+	{
+		return m_Types.at(1);
+	}
+
+	size_t GetArgumentCount() const noexcept override
+	{
+		return m_Types.size() - 2;
+	}
+
+	natRefPointer<IType> GetArgumentType(size_t n) const noexcept override
+	{
+		return m_Types.at(n + 2);
+	}
+
+	bool IsConstMemberMethod() const noexcept override
+	{
+		return true;
 	}
 
 	MethodType Get() const noexcept
@@ -636,4 +733,5 @@ public:
 
 private:
 	MethodType m_Func;
+	std::vector<natRefPointer<IType>> m_Types;
 };

@@ -70,10 +70,9 @@ int main()
 {
 	try
 	{
-		auto type = Reflection::GetInstance().GetType(_T("Foo"));
-		std::wcout << type->GetName() << std::endl;
+		auto type = typeofname(_T("Foo"));
 		auto pFoo = type->Construct({ 1 });
-		std::wcout << type->InvokeMember(pFoo, _T("GetTest"), {})->ToString() << std::endl << type->InvokeMember(pFoo, _T("GetTest"), {1})->ToString() << std::endl;
+		std::wcout << pFoo->ToString() << std::endl << type->InvokeMember(pFoo, _T("GetTest"), {})->ToString() << std::endl << type->InvokeMember(pFoo, _T("GetTest"), { 1 })->ToString() << std::endl;
 		std::vector<nTString> members{};
 		type->EnumMember([&members](ncTStr name, bool isMethod, natRefPointer<IType> objectType)
 		{
@@ -87,9 +86,13 @@ int main()
 		std::wcout << type->InvokeMember(pFoo, _T("Test"), {})->ToString() << std::endl;
 		std::wcout << type->ReadMemberField(pFoo, _T("m_Test"))->ToString() << std::endl;
 
-		auto type2 = Reflection::GetInstance().GetType(_T("Bar"));
+		auto type2 = typeofname(_T("Bar"));
 		auto pBar = type2->Construct({ 1 });
 		std::wcout << type2->InvokeMember(pBar, _T("Test"), {})->ToString() << std::endl;
+	}
+	catch (ReflectionException& e)
+	{
+		std::wcout << e.GetDesc() << std::endl;
 	}
 	catch (std::exception& e)
 	{

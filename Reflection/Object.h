@@ -12,16 +12,13 @@ natRefPointer<Object> CommonConstructor(std::tuple<Args...>&& args, std::index_s
 struct Object
 	: natRefObjImpl<Interface>
 {
-	virtual natRefPointer<IType> GetType() const noexcept = 0;
-	virtual nTString ToString() const noexcept
-	{
-		return GetType()->GetName();
-	}
+	virtual ~Object();
 
-	virtual std::type_index GetUnboxedType()
-	{
-		return GetType()->GetTypeIndex();
-	}
+	static ncTStr GetName() noexcept;
+
+	virtual natRefPointer<IType> GetType() const noexcept;
+	virtual nTString ToString() const noexcept;
+	virtual std::type_index GetUnboxedType();
 
 	template <typename T>
 	T& Unbox();

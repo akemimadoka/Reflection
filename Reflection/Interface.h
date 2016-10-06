@@ -21,19 +21,23 @@ struct IType;
 struct IMethod
 	: Interface
 {
-	virtual bool Match(ArgumentPack const& pack) = 0;
 	virtual natRefPointer<Object> Invoke(ArgumentPack const& pack) = 0;
 	virtual bool CompatWith(ArgumentPack const& pack) const noexcept = 0;
 	virtual natRefPointer<IType> GetReturnType() const noexcept = 0;
+	virtual size_t GetArgumentCount() const noexcept = 0;
+	virtual natRefPointer<IType> GetArgumentType(size_t n) const noexcept = 0;
 };
 
 struct IMemberMethod
 	: Interface
 {
-	virtual bool Match(natRefPointer<Object> object, ArgumentPack const& pack) = 0;
 	virtual natRefPointer<Object> Invoke(natRefPointer<Object> object, ArgumentPack const& pack) = 0;
 	virtual bool CompatWith(natRefPointer<Object> object, ArgumentPack const& pack) const noexcept = 0;
 	virtual natRefPointer<IType> GetReturnType() const noexcept = 0;
+	virtual natRefPointer<IType> GetClassType() const noexcept = 0;
+	virtual size_t GetArgumentCount() const noexcept = 0;
+	virtual natRefPointer<IType> GetArgumentType(size_t n) const noexcept = 0;
+	virtual bool IsConstMemberMethod() const noexcept = 0;
 };
 
 struct IField

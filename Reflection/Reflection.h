@@ -9,8 +9,6 @@
 
 using namespace NatsuLib;
 
-#undef RegisterClass
-
 #define GENERATE_METADATA(classname) typedef classname Self_t_;\
 static Reflection::ReflectionClassRegister<Self_t_> _s_RefectionHelper_##classname;\
 static ncTStr GetName() noexcept\
@@ -19,7 +17,7 @@ static ncTStr GetName() noexcept\
 }\
 natRefPointer<IType> GetType() const noexcept override\
 {\
-	return Reflection::GetInstance().GetType<Self_t_>();\
+	return typeof(Self_t_);\
 }
 
 #define GENERATE_METADATA_DEFINITION(classname) Reflection::ReflectionClassRegister<classname> classname::_s_RefectionHelper_##classname
@@ -136,7 +134,9 @@ natRefPointer<pointertotype> fieldname
 
 #define DEFINE_MEMBER_POINTER_FIELD(classname, pointertotype, fieldname) Reflection::ReflectionMemberFieldRegister<classname> classname::_s_ReflectionHelper_##classname##_MemberPointerField_##pointertotype##_##fieldname##_{ _T(#fieldname), &classname::fieldname }
 
-#define typeof(expression) Reflection::GetInstance().GetType<decltype(expression)>()
+#define typeof(type) Reflection::GetInstance().GetType<type>()
+#define typeofexp(expression) Reflection::GetInstance().GetType<decltype(expression)>()
+#define typeofname(name) Reflection::GetInstance().GetType(name)
 
 class Reflection
 {
@@ -146,7 +146,7 @@ public:
 	{
 		ReflectionClassRegister()
 		{
-			GetInstance().RegisterClass<T>();
+			GetInstance().RegisterType<T>();
 		}
 	};
 
@@ -190,14 +190,10 @@ public:
 		}
 	};
 
-	static Reflection& GetInstance()
-	{
-		static Reflection s_Instance;
-		return s_Instance;
-	}
+	static Reflection& GetInstance();
 
 	template <typename Class>
-	void RegisterClass()
+	void RegisterType()
 	{
 		m_TypeTable[typeid(Class)] = make_ref<Type<Class>>();
 	}
@@ -227,16 +223,7 @@ public:
 	}
 
 	template <typename Class>
-	natRefPointer<IType> GetType()
-	{
-		auto iter = m_TypeTable.find(typeid(Class));
-		if (iter != m_TypeTable.end())
-		{
-			return iter->second;
-		}
-
-		nat_Throw(ReflectionException, _T("Type not found."));
-	}
+	natRefPointer<IType> GetType();
 
 	natRefPointer<IType> GetType(ncTStr typeName);
 
@@ -257,7 +244,6 @@ public:
 	friend struct Object;
 
 	typedef BoxedObject Self_t_;
-	static Reflection::ReflectionClassRegister<Self_t_> _s_RefectionHelper_BoxedObject;
 	static ncTStr GetName() noexcept;
 	natRefPointer<IType> GetType() const noexcept override
 	{
@@ -292,11 +278,6 @@ public:
 		return m_Obj;
 	}
 
-	operator T && () noexcept
-	{
-		return m_Obj;
-	}
-
 	nTString ToString() const noexcept override
 	{
 		return _toString(this);
@@ -319,7 +300,6 @@ class BoxedObject<void> final
 {
 public:
 	typedef BoxedObject<void> Self_t_;
-	static Reflection::ReflectionClassRegister<Self_t_> _s_RefectionHelper_BoxedObject;
 	static ncTStr GetName() noexcept;
 	natRefPointer<IType> GetType() const noexcept override
 	{
@@ -406,9 +386,27 @@ namespace detail_
 
 template <typename T>
 struct boxed_type
-	: ::detail_::boxed_type_impl<T, std::is_integral<T>::value || std::is_floating_point<T>::value>
+	: ::detail_::boxed_type_impl<T, std::disjunction<std::is_integral<T>, std::is_floating_point<T>, std::is_void<T>>::value>
+{
+};
+
+template <typename T>
+struct boxed_type<natRefPointer<T>>
+	: boxed_type<T>
 {
 };
 
 template <typename T>
 using boxed_type_t = typename boxed_type<T>::type;
+
+template <typename Class>
+natRefPointer<IType> Reflection::GetType()
+{
+	auto iter = m_TypeTable.find(typeid(boxed_type_t<Class>));
+	if (iter != m_TypeTable.end())
+	{
+		return iter->second;
+	}
+
+	nat_Throw(ReflectionException, _T("Type not found."));
+}

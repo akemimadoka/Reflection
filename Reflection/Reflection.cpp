@@ -6,6 +6,12 @@
 #define toTString std::to_string
 #endif
 
+Reflection& Reflection::GetInstance()
+{
+	static Reflection s_Instance;
+	return s_Instance;
+}
+
 natRefPointer<IType> Reflection::GetType(ncTStr typeName)
 {
 	for (auto&& item : m_TypeTable)
@@ -19,20 +25,11 @@ natRefPointer<IType> Reflection::GetType(ncTStr typeName)
 	nat_Throw(ReflectionException, _T("Type not found."));
 }
 
-Reflection::Reflection()
-{
-}
-
-Reflection::~Reflection()
-{
-}
-
 #undef INITIALIZEBOXEDOBJECT
 #define INITIALIZEBOXEDOBJECT(type, alias) ncTStr BoxedObject<type>::GetName() noexcept\
 {\
 	return _T("BoxedObject<"## #type ##">");\
-}\
-Reflection::ReflectionClassRegister<BoxedObject<type>> BoxedObject<type>::_s_RefectionHelper_BoxedObject
+}
 
 INITIALIZEBOXEDOBJECT(char, Char);
 INITIALIZEBOXEDOBJECT(wchar_t, WChar);
@@ -114,6 +111,55 @@ nTString Float::_toString(const Float* pThis) noexcept
 nTString Double::_toString(const Double* pThis) noexcept
 {
 	return toTString(pThis->m_Obj);
+}
+
+#undef INITIALIZEBOXEDOBJECT
+#define INITIALIZEBOXEDOBJECT(type, alias) RegisterType<alias>()
+
+Reflection::Reflection()
+{
+	RegisterType<Object>();
+	INITIALIZEBOXEDOBJECT(char, Char);
+	INITIALIZEBOXEDOBJECT(wchar_t, WChar);
+	INITIALIZEBOXEDOBJECT(int8_t, SByte);
+	INITIALIZEBOXEDOBJECT(uint8_t, Byte);
+	INITIALIZEBOXEDOBJECT(int16_t, Short);
+	INITIALIZEBOXEDOBJECT(uint16_t, UShort);
+	INITIALIZEBOXEDOBJECT(int32_t, Integer);
+	INITIALIZEBOXEDOBJECT(uint32_t, UInteger);
+	INITIALIZEBOXEDOBJECT(int64_t, Long);
+	INITIALIZEBOXEDOBJECT(uint64_t, ULong);
+	INITIALIZEBOXEDOBJECT(float, Float);
+	INITIALIZEBOXEDOBJECT(double, Double);
+	INITIALIZEBOXEDOBJECT(void, Void);
+}
+
+Reflection::~Reflection()
+{
+}
+
+Object::~Object()
+{
+}
+
+ncTStr Object::GetName() noexcept
+{
+	return _T("Object");
+}
+
+natRefPointer<IType> Object::GetType() const noexcept
+{
+	return typeof(Object);
+}
+
+nTString Object::ToString() const noexcept
+{
+	return GetType()->GetName();
+}
+
+std::type_index Object::GetUnboxedType()
+{
+	return GetType()->GetTypeIndex();
 }
 
 natRefPointer<Object> Object::Box()
