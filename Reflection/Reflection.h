@@ -317,8 +317,17 @@ public:
 	}
 };
 
-bool operator==(natRefPointer<Object> const& ptr, nullptr_t);
-bool operator==(nullptr_t, natRefPointer<Object> const& ptr);
+template <typename T>
+std::enable_if_t<std::is_base_of<Object, T>::value, bool> operator==(natRefPointer<T> const& ptr, nullptr_t)
+{
+	return ptr->GetType()->GetTypeIndex() == typeid(BoxedObject<void>) || ptr.Get() == nullptr;
+}
+
+template <typename T>
+std::enable_if_t<std::is_base_of<Object, T>::value, bool> operator==(nullptr_t, natRefPointer<T> const& ptr)
+{
+	return ptr == nullptr;
+}
 
 template <typename T>
 T& Object::Unbox()

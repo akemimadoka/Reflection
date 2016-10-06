@@ -73,15 +73,15 @@ int main()
 		auto type = typeofname(_T("Foo"));
 		auto pFoo = type->Construct({ 1 });
 		std::wcout << pFoo->ToString() << std::endl << type->InvokeMember(pFoo, _T("GetTest"), {})->ToString() << std::endl << type->InvokeMember(pFoo, _T("GetTest"), { 1 })->ToString() << std::endl;
-		std::vector<nTString> members{};
+		std::vector<std::pair<bool, nTString>> members{};
 		type->EnumMember([&members](ncTStr name, bool isMethod, natRefPointer<IType> objectType)
 		{
-			members.emplace_back(name);
+			members.emplace_back(isMethod, name);
 			return false;
 		});
 		for (auto&& item : members)
 		{
-			std::wcout << item << std::endl;
+			std::wcout << (item.first ? _T("Method : ") : _T("Field : ")) << item.second << std::endl;
 		}
 		std::wcout << type->InvokeMember(pFoo, _T("Test"), {})->ToString() << std::endl;
 		std::wcout << type->ReadMemberField(pFoo, _T("m_Test"))->ToString() << std::endl;

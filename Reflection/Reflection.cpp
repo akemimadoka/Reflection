@@ -166,13 +166,3 @@ natRefPointer<Object> Object::Box()
 {
 	return make_ref<BoxedObject<void>>();
 }
-
-bool operator==(natRefPointer<Object> const& ptr, nullptr_t)
-{
-	return ptr->GetType()->GetTypeIndex() == typeid(BoxedObject<void>) || ptr.Get() == nullptr;
-}
-
-bool operator==(nullptr_t, natRefPointer<Object> const& ptr)
-{
-	return ptr == nullptr;
-}
