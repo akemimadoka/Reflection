@@ -24,14 +24,24 @@ class NonMemberField<T*>
 public:
 	typedef T* FieldType;
 
-	explicit NonMemberField(FieldType field)
-		: m_Field{ field }
+	explicit NonMemberField(AccessSpecifier accessSpecifier, FieldType field)
+		: m_AccessSpecifier{ accessSpecifier }, m_Field { field }
 	{
 	}
 
 	natRefPointer<IType> GetType() override
 	{
 		return m_Field->GetType();
+	}
+
+	AccessSpecifier GetAccessSpecifier() const noexcept override
+	{
+		return m_AccessSpecifier;
+	}
+
+	AccessSpecifier SetAccessSpecifier(AccessSpecifier accessSpecifier) noexcept override
+	{
+		return std::exchange(m_AccessSpecifier, accessSpecifier);
 	}
 
 	bool IsPointer() const noexcept override
@@ -50,6 +60,7 @@ public:
 	}
 
 private:
+	AccessSpecifier m_AccessSpecifier;
 	FieldType m_Field;
 };
 
@@ -63,14 +74,21 @@ class MemberField<T(Class::*)>
 public:
 	typedef T(Class::*FieldType);
 
-	explicit MemberField(FieldType field)
-		: m_Field{ field }
+	explicit MemberField(AccessSpecifier accessSpecifier, FieldType field)
+		: m_AccessSpecifier{ accessSpecifier }, m_Field{ field }
 	{
 	}
 
-	natRefPointer<IType> GetType() override
+	natRefPointer<IType> GetType() override;
+
+	AccessSpecifier GetAccessSpecifier() const noexcept override
 	{
-		return Reflection::GetInstance().GetType<boxed_type_t<T>>();
+		return m_AccessSpecifier;
+	}
+
+	AccessSpecifier SetAccessSpecifier(AccessSpecifier accessSpecifier) noexcept override
+	{
+		return std::exchange(m_AccessSpecifier, accessSpecifier);
 	}
 
 	bool IsPointer() const noexcept override
@@ -89,5 +107,6 @@ public:
 	}
 
 private:
+	AccessSpecifier m_AccessSpecifier;
 	FieldType m_Field;
 };

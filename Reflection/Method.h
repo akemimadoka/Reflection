@@ -3,7 +3,7 @@
 #include "Object.h"
 #include <deque>
 
-namespace detail_
+namespace rdetail_
 {
 	struct forward_call_t
 	{
@@ -80,13 +80,13 @@ private:
 };
 
 template <typename Ret, typename... Args>
-struct MethodHelper<Ret(*)(detail_::forward_call_t, std::tuple<Args...>&&)>
+struct MethodHelper<Ret(*)(rdetail_::forward_call_t, std::tuple<Args...>&&)>
 {
-	typedef Ret(*MethodType)(detail_::forward_call_t, std::tuple<Args...>&&);
+	typedef Ret(*MethodType)(rdetail_::forward_call_t, std::tuple<Args...>&&);
 
 	static decltype(auto) InvokeWithArgs(MethodType method, Args... args)
 	{
-		return method(detail_::forward_call, std::forward_as_tuple(static_cast<Args>(args)...));
+		return method(rdetail_::forward_call, std::forward_as_tuple(static_cast<Args>(args)...));
 	}
 
 	static decltype(auto) InvokeWithArgPack(MethodType method, ArgumentPack const& pack)
@@ -169,13 +169,13 @@ private:
 };
 
 template <typename... Args>
-struct MethodHelper<void(*)(detail_::forward_call_t, std::tuple<Args...>&&)>
+struct MethodHelper<void(*)(rdetail_::forward_call_t, std::tuple<Args...>&&)>
 {
-	typedef void(*MethodType)(detail_::forward_call_t, std::tuple<Args...>&&);
+	typedef void(*MethodType)(rdetail_::forward_call_t, std::tuple<Args...>&&);
 
 	static decltype(auto) InvokeWithArgs(MethodType method, Args... args)
 	{
-		return method(detail_::forward_call, std::forward_as_tuple(static_cast<Args>(args)...));
+		return method(rdetail_::forward_call, std::forward_as_tuple(static_cast<Args>(args)...));
 	}
 
 	static decltype(auto) InvokeWithArgPack(MethodType method, ArgumentPack const& pack)
@@ -258,13 +258,13 @@ private:
 };
 
 template <typename Ret, typename Class, typename... Args>
-struct MethodHelper<Ret(Class::*)(detail_::forward_call_t, std::tuple<Args...>&&)>
+struct MethodHelper<Ret(Class::*)(rdetail_::forward_call_t, std::tuple<Args...>&&)>
 {
-	typedef Ret(Class::*MethodType)(detail_::forward_call_t, std::tuple<Args...>&&);
+	typedef Ret(Class::*MethodType)(rdetail_::forward_call_t, std::tuple<Args...>&&);
 
 	static decltype(auto) InvokeWithArgs(Class* object, MethodType method, Args... args)
 	{
-		return (object->*method)(detail_::forward_call, std::forward_as_tuple(static_cast<Args>(args)...));
+		return (object->*method)(rdetail_::forward_call, std::forward_as_tuple(static_cast<Args>(args)...));
 	}
 
 	static decltype(auto) InvokeWithArgPack(Class* object, MethodType method, ArgumentPack const& pack)
@@ -347,13 +347,13 @@ private:
 };
 
 template <typename Class, typename... Args>
-struct MethodHelper<void(Class::*)(detail_::forward_call_t, std::tuple<Args...>&&)>
+struct MethodHelper<void(Class::*)(rdetail_::forward_call_t, std::tuple<Args...>&&)>
 {
-	typedef void(Class::*MethodType)(detail_::forward_call_t, std::tuple<Args...>&&);
+	typedef void(Class::*MethodType)(rdetail_::forward_call_t, std::tuple<Args...>&&);
 
 	static decltype(auto) InvokeWithArgs(Class* object, MethodType method, Args... args)
 	{
-		return (object->*method)(detail_::forward_call, std::forward_as_tuple(static_cast<Args>(args)...));
+		return (object->*method)(rdetail_::forward_call, std::forward_as_tuple(static_cast<Args>(args)...));
 	}
 
 	static decltype(auto) InvokeWithArgPack(Class* object, MethodType method, ArgumentPack const& pack)
@@ -436,13 +436,13 @@ private:
 };
 
 template <typename Ret, typename Class, typename... Args>
-struct MethodHelper<Ret(Class::*)(detail_::forward_call_t, std::tuple<Args...>&&) const>
+struct MethodHelper<Ret(Class::*)(rdetail_::forward_call_t, std::tuple<Args...>&&) const>
 {
-	typedef Ret(Class::*MethodType)(detail_::forward_call_t, std::tuple<Args...>&&) const;
+	typedef Ret(Class::*MethodType)(rdetail_::forward_call_t, std::tuple<Args...>&&) const;
 
 	static decltype(auto) InvokeWithArgs(const Class* object, MethodType method, Args... args)
 	{
-		return (object->*method)(detail_::forward_call, std::forward_as_tuple(static_cast<Args>(args)...));
+		return (object->*method)(rdetail_::forward_call, std::forward_as_tuple(static_cast<Args>(args)...));
 	}
 
 	static decltype(auto) InvokeWithArgPack(const Class* object, MethodType method, ArgumentPack const& pack)
@@ -525,13 +525,13 @@ private:
 };
 
 template <typename Class, typename... Args>
-struct MethodHelper<void(Class::*)(detail_::forward_call_t, std::tuple<Args...>&&) const>
+struct MethodHelper<void(Class::*)(rdetail_::forward_call_t, std::tuple<Args...>&&) const>
 {
-	typedef void(Class::*MethodType)(detail_::forward_call_t, std::tuple<Args...>&&) const;
+	typedef void(Class::*MethodType)(rdetail_::forward_call_t, std::tuple<Args...>&&) const;
 
 	static decltype(auto) InvokeWithArgs(const Class* object, MethodType method, Args... args)
 	{
-		return (object->*method)(detail_::forward_call, std::forward_as_tuple(static_cast<Args>(args)...));
+		return (object->*method)(rdetail_::forward_call, std::forward_as_tuple(static_cast<Args>(args)...));
 	}
 
 	static decltype(auto) InvokeWithArgPack(const Class* object, MethodType method, ArgumentPack const& pack)
@@ -579,9 +579,19 @@ class NonMemberMethod<Ret(*)(Args...)>
 public:
 	typedef Ret(*MethodType)(Args...);
 
-	explicit NonMemberMethod(MethodType method)
-		: m_Func(method), m_Types(MethodHelper<MethodType>::GetType())
+	explicit NonMemberMethod(AccessSpecifier accessSpecifier, MethodType method)
+		: m_AccessSpecifier{ accessSpecifier }, m_Func(method), m_Types(MethodHelper<MethodType>::GetType())
 	{
+	}
+
+	AccessSpecifier GetAccessSpecifier() const noexcept override
+	{
+		return m_AccessSpecifier;
+	}
+
+	AccessSpecifier SetAccessSpecifier(AccessSpecifier accessSpecifier) noexcept override
+	{
+		return std::exchange(m_AccessSpecifier, accessSpecifier);
 	}
 
 	natRefPointer<Object> Invoke(ArgumentPack const& pack) override
@@ -615,6 +625,7 @@ public:
 	}
 
 private:
+	AccessSpecifier m_AccessSpecifier;
 	MethodType m_Func;
 	std::vector<natRefPointer<IType>> m_Types;
 };
@@ -629,18 +640,38 @@ class MemberMethod<Ret(Class::*)(Args...)>
 public:
 	typedef	Ret(Class::*MethodType)(Args...);
 
-	explicit MemberMethod(MethodType method)
-		: m_Func(method), m_Types(MethodHelper<MethodType>::GetType())
+	explicit MemberMethod(AccessSpecifier accessSpecifier, MethodType method)
+		: m_AccessSpecifier{ accessSpecifier }, m_Func(method), m_Types(MethodHelper<MethodType>::GetType())
 	{
+	}
+
+	AccessSpecifier GetAccessSpecifier() const noexcept override
+	{
+		return m_AccessSpecifier;
+	}
+
+	AccessSpecifier SetAccessSpecifier(AccessSpecifier accessSpecifier) noexcept override
+	{
+		return std::exchange(m_AccessSpecifier, accessSpecifier);
 	}
 
 	natRefPointer<Object> Invoke(natRefPointer<Object> object, ArgumentPack const& pack) override
 	{
+		if (object.Get() == nullptr)
+		{
+			nat_Throw(NullPointerException, _T("Object is nullptr."));
+		}
+
 		return MethodHelper<MethodType>::Invoke(object, m_Func, pack);
 	}
 
 	bool CompatWith(natRefPointer<Object> object, ArgumentPack const& pack) const noexcept override
 	{
+		if (object.Get() == nullptr)
+		{
+			return false;
+		}
+
 		return MethodHelper<MethodType>::CompatWith(object, pack);
 	}
 
@@ -675,6 +706,7 @@ public:
 	}
 
 private:
+	AccessSpecifier m_AccessSpecifier;
 	MethodType m_Func;
 	std::vector<natRefPointer<IType>> m_Types;
 };
@@ -686,9 +718,19 @@ class MemberMethod<Ret(Class::*)(Args...) const>
 public:
 	typedef	Ret(Class::*MethodType)(Args...) const;
 
-	explicit MemberMethod(MethodType method)
-		: m_Func(method), m_Types(MethodHelper<MethodType>::GetType())
+	explicit MemberMethod(AccessSpecifier accessSpecifier, MethodType method)
+		: m_AccessSpecifier{ accessSpecifier }, m_Func(method), m_Types(MethodHelper<MethodType>::GetType())
 	{
+	}
+
+	AccessSpecifier GetAccessSpecifier() const noexcept override
+	{
+		return m_AccessSpecifier;
+	}
+
+	AccessSpecifier SetAccessSpecifier(AccessSpecifier accessSpecifier) noexcept override
+	{
+		return std::exchange(m_AccessSpecifier, accessSpecifier);
 	}
 
 	natRefPointer<Object> Invoke(natRefPointer<Object> object, ArgumentPack const& pack) override
@@ -732,6 +774,7 @@ public:
 	}
 
 private:
+	AccessSpecifier m_AccessSpecifier;
 	MethodType m_Func;
 	std::vector<natRefPointer<IType>> m_Types;
 };

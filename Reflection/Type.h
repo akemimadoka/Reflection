@@ -14,6 +14,8 @@ class Type
 public:
 	typedef T type;
 
+	void RegisterBaseClasses(std::initializer_list<natRefPointer<IType>> baseClasses) override;
+
 	void RegisterNonMemberMethod(ncTStr name, natRefPointer<IMethod> method) override
 	{
 		m_NonMemberMethodMap.emplace(name, method);
@@ -44,11 +46,32 @@ public:
 		return InvokeNonMember(CONSTRUCTOR_NAME_STR, args);
 	}
 
+	size_t GetBaseClassesCount() const noexcept override
+	{
+		return m_BaseClasses.size();
+	}
+
+	natRefPointer<IType> GetBaseClass(size_t n) const noexcept override
+	{
+		return m_BaseClasses.at(n);
+	}
+
 	natRefPointer<Object> InvokeNonMember(ncTStr name, ArgumentPack const& args) override
 	{
 		auto range = m_NonMemberMethodMap.equal_range(name);
 		if (range.first == range.second)
 		{
+			for (auto&& item : m_BaseClasses)
+			{
+				try
+				{
+					return item->InvokeNonMember(name, args);
+				}
+				catch (...)
+				{
+					// if any, rethrow below
+				}
+			}
 			nat_Throw(ReflectionException, _T("No such nonmember method named {0}."), name);
 		}
 
@@ -68,6 +91,17 @@ public:
 		auto range = m_MemberMethodMap.equal_range(name);
 		if (range.first == range.second)
 		{
+			for (auto&& item : m_BaseClasses)
+			{
+				try
+				{
+					return item->InvokeMember(object, name, args);
+				}
+				catch (...)
+				{
+					// if any, rethrow below
+				}
+			}
 			nat_Throw(ReflectionException, _T("No such member method named {0}."), name);
 		}
 
@@ -77,6 +111,84 @@ public:
 			{
 				return item.second->Invoke(object, args);
 			}
+		}
+
+		nat_Throw(ReflectionException, _T("None of overloaded member method named {0} can be invoked with given args."), name);
+	}
+
+	natRefPointer<IMethod> GetNonMemberMethod(ncTStr name, std::initializer_list<natRefPointer<IType>> const& argTypes) override
+	{
+		auto range = m_NonMemberMethodMap.equal_range(name);
+		if (range.first == range.second)
+		{
+			for (auto&& item : m_BaseClasses)
+			{
+				try
+				{
+					return item->GetNonMemberMethod(name, argTypes);
+				}
+				catch (...)
+				{
+					// if any, rethrow below
+				}
+			}
+			nat_Throw(ReflectionException, _T("No such nonmember method named {0}."), name);
+		}
+
+		for (auto&& item : make_range(range.first, range.second))
+		{
+			if (item.second->GetArgumentCount() == argTypes.size())
+			{
+				for (size_t i = 0; i < argTypes.size(); ++i)
+				{
+					if (!item.second->GetArgumentType(i)->Equal(std::next(begin(argTypes), i)->Get()))
+					{
+						goto NotMatch;
+					}
+				}
+				return item.second;
+			}
+		NotMatch:
+			continue;
+		}
+
+		nat_Throw(ReflectionException, _T("None of overloaded nonmember method named {0} can be invoked with given args."), name);
+	}
+
+	natRefPointer<IMemberMethod> GetMemberMethod(ncTStr name, std::initializer_list<natRefPointer<IType>> const& argTypes) override
+	{
+		auto range = m_MemberMethodMap.equal_range(name);
+		if (range.first == range.second)
+		{
+			for (auto&& item : m_BaseClasses)
+			{
+				try
+				{
+					return item->GetMemberMethod(name, argTypes);
+				}
+				catch (...)
+				{
+					// if any, rethrow below
+				}
+			}
+			nat_Throw(ReflectionException, _T("No such member method named {0}."), name);
+		}
+
+		for (auto&& item : make_range(range.first, range.second))
+		{
+			if (item.second->GetArgumentCount() == argTypes.size())
+			{
+				for (size_t i = 0; i < argTypes.size(); ++i)
+				{
+					if (!item.second->GetArgumentType(i)->Equal(std::next(begin(argTypes), i)->Get()))
+					{
+						goto NotMatch;
+					}
+				}
+				return item.second;
+			}
+		NotMatch:
+			continue;
 		}
 
 		nat_Throw(ReflectionException, _T("None of overloaded member method named {0} can be invoked with given args."), name);
@@ -147,8 +259,30 @@ public:
 
 		iter->second->WriteFrom(object, value);
 	}
+	
+	natRefPointer<IField> GetNonMemberField(ncTStr name) override
+	{
+		auto iter = m_NonMemberFieldMap.find(name);
+		if (iter == m_NonMemberFieldMap.end())
+		{
+			nat_Throw(ReflectionException, _T("No such member field named {0}."), name);
+		}
 
-	bool EnumNonMember(Delegate<bool(ncTStr, bool, natRefPointer<IType>)> enumFunc) const override
+		return iter->second;
+	}
+
+	natRefPointer<IMemberField> GetMemberField(ncTStr name) override
+	{
+		auto iter = m_MemberFieldMap.find(name);
+		if (iter == m_MemberFieldMap.end())
+		{
+			nat_Throw(ReflectionException, _T("No such member field named {0}."), name);
+		}
+
+		return iter->second;
+	}
+
+	bool EnumNonMember(bool recurse, Delegate<bool(ncTStr, bool, natRefPointer<IType>)> enumFunc) const override
 	{
 		for (auto&& item : m_NonMemberMethodMap)
 		{
@@ -164,11 +298,18 @@ public:
 				return true;
 			}
 		}
+		if (recurse)
+		{
+			for (auto&& item : m_BaseClasses)
+			{
+				item->EnumNonMember(true, enumFunc);
+			}
+		}
 
 		return false;
 	}
 
-	bool EnumMember(Delegate<bool(ncTStr, bool, natRefPointer<IType>)> enumFunc) const override
+	bool EnumMember(bool recurse, Delegate<bool(ncTStr, bool, natRefPointer<IType>)> enumFunc) const override
 	{
 		for (auto&& item : m_MemberMethodMap)
 		{
@@ -182,6 +323,13 @@ public:
 			if (enumFunc(item.first.c_str(), false, item.second->GetType()))
 			{
 				return true;
+			}
+		}
+		if (recurse)
+		{
+			for (auto&& item : m_BaseClasses)
+			{
+				item->EnumMember(true, enumFunc);
 			}
 		}
 
@@ -213,45 +361,26 @@ public:
 		return toType->Construct(ArgumentPack{ object });
 	}
 
+	bool IsExtendFrom(natRefPointer<IType> type) const override
+	{
+		if (!type)
+		{
+			return false;
+		}
+
+		for (auto&& item : m_BaseClasses)
+		{
+			if (item->Equal(type) || item->IsExtendFrom(type))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 private:
-	bool CompatWithNonMember(ncTStr name, ArgumentPack const& args) const noexcept
-	{
-		auto range = m_NonMemberMethodMap.equal_range(name);
-		if (range.first == range.second)
-		{
-			return false;
-		}
-
-		for (auto&& item : make_range(range.first, range.second))
-		{
-			if (item.second->CompatWith(args))
-			{
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	bool CompatWithMember(ncTStr name, ArgumentPack const& args) const noexcept
-	{
-		auto range = m_MemberMethodMap.equal_range(name);
-		if (range.first == range.second)
-		{
-			return false;
-		}
-
-		for (auto&& item : make_range(range.first, range.second))
-		{
-			if (item.second->CompatWith(args))
-			{
-				return true;
-			}
-		}
-
-		return false;
-	}
-
+	std::vector<natRefPointer<IType>> m_BaseClasses;
 	std::unordered_multimap<nTString, natRefPointer<IMethod>> m_NonMemberMethodMap;
 	std::unordered_multimap<nTString, natRefPointer<IMemberMethod>> m_MemberMethodMap;
 	std::unordered_map<nTString, natRefPointer<IField>> m_NonMemberFieldMap;
