@@ -28,7 +28,8 @@ natRefPointer<IType> Reflection::GetType(ncTStr typeName)
 #undef INITIALIZEBOXEDOBJECT
 #define INITIALIZEBOXEDOBJECT(type, alias) ncTStr BoxedObject<type>::GetName() noexcept\
 {\
-	return _T("BoxedObject<"## #type ##">");\
+	/*return _T("BoxedObject<"## #type ##">");*/\
+	return _T(#alias);\
 }
 
 INITIALIZEBOXEDOBJECT(char, Char);

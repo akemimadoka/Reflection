@@ -72,16 +72,7 @@ int main()
 		auto type = typeofname(_T("Foo"));
 		auto pFoo = type->Construct({ 1 });
 		std::wcout << pFoo->ToString() << std::endl << type->InvokeMember(pFoo, _T("GetTest"), {})->ToString() << std::endl << type->InvokeMember(pFoo, _T("GetTest"), { 1 })->ToString() << std::endl;
-		std::vector<std::pair<bool, nTString>> members{};
-		type->EnumMember(true, [&members](ncTStr name, bool isMethod, natRefPointer<IType> objectType)
-		{
-			members.emplace_back(isMethod, name);
-			return false;
-		});
-		for (auto&& item : members)
-		{
-			std::wcout << (item.first ? _T("Method : ") : _T("Field : ")) << item.second << std::endl;
-		}
+		
 		std::wcout << type->InvokeMember(pFoo, _T("Test"), {})->ToString() << std::endl;
 		std::wcout << type->ReadMemberField(pFoo, _T("m_Test"))->ToString() << std::endl;
 
@@ -91,6 +82,26 @@ int main()
 		auto type2 = typeofname(_T("Bar"));
 		auto pBar = type2->Construct({ 1 });
 		std::wcout << type2->InvokeMember(pBar, _T("Test"), {})->ToString() << std::endl << std::endl;
+
+		std::vector<std::tuple<bool, nTString, natRefPointer<IType>>> members{};
+		type2->EnumMember(true, [&members](ncTStr name, bool isMethod, natRefPointer<IType> objectType)
+		{
+			members.emplace_back(isMethod, name, objectType);
+			return false;
+		});
+		for (auto&& item : members)
+		{
+			if (std::get<0>(item))
+			{
+				std::wcout << _T("Method : ") << std::get<1>(item) << std::endl;
+			}
+			else
+			{
+				std::wcout << _T("Field : ") << std::get<1>(item) << _T(" (") << std::get<2>(item)->GetName() << _T(")") << std::endl;
+			}
+		}
+
+		std::wcout << std::boolalpha << type2->IsExtendFrom(type) << std::endl;
 
 		// Benchmark
 		/*auto Test = type2->GetMemberMethod(_T("Test"), {});

@@ -10,7 +10,7 @@
 using namespace NatsuLib;
 
 #define GENERATE_METADATA(classname) private: typedef classname Self_t_;\
-static Reflection::ReflectionClassRegister<Self_t_> _s_RefectionHelper;\
+static Reflection::ReflectionClassRegister<Self_t_> _s_ReflectionHelper_##classname;\
 public: static ncTStr GetName() noexcept\
 {\
 	return _T(#classname);\
@@ -23,7 +23,7 @@ natRefPointer<IType> GetType() const noexcept override\
 #define GENERATE_METADATA_WITH_BASE_CLASSES(classname, ...) GENERATE_METADATA(classname)\
 static Reflection::ReflectionBaseClassesRegister<Self_t_, __VA_ARGS__> _s_ReflectionBaseClassesHelper
 
-#define GENERATE_METADATA_DEFINITION(classname) Reflection::ReflectionClassRegister<classname> classname::_s_RefectionHelper
+#define GENERATE_METADATA_DEFINITION(classname) Reflection::ReflectionClassRegister<classname> classname::_s_ReflectionHelper_##classname
 #define GENERATE_METADATA_DEFINITION_WITH_BASE_CLASSES(classname, ...) Reflection::ReflectionBaseClassesRegister<classname, __VA_ARGS__> classname::_s_ReflectionBaseClassesHelper
 
 #define DECLARE_REFLECTABLE_CLASS(classname) class classname : virtual public Object
@@ -260,8 +260,7 @@ public:
 	template <typename Class>
 	void RegisterType()
 	{
-		auto iter = m_TypeTable.find(typeid(Class));
-		if (iter == m_TypeTable.end())
+		if (m_TypeTable.find(typeid(Class)) == m_TypeTable.end())
 		{
 			m_TypeTable.emplace(typeid(Class), make_ref<Type<Class>>());
 		}

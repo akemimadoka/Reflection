@@ -69,7 +69,7 @@ public:
 				}
 				catch (...)
 				{
-					// if any, rethrow below
+					// if all, rethrow below
 				}
 			}
 			nat_Throw(ReflectionException, _T("No such nonmember method named {0}."), name);
@@ -99,7 +99,7 @@ public:
 				}
 				catch (...)
 				{
-					// if any, rethrow below
+					// if all, rethrow below
 				}
 			}
 			nat_Throw(ReflectionException, _T("No such member method named {0}."), name);
@@ -129,7 +129,7 @@ public:
 				}
 				catch (...)
 				{
-					// if any, rethrow below
+					// if all, rethrow below
 				}
 			}
 			nat_Throw(ReflectionException, _T("No such nonmember method named {0}."), name);
@@ -168,7 +168,7 @@ public:
 				}
 				catch (...)
 				{
-					// if any, rethrow below
+					// if all, rethrow below
 				}
 			}
 			nat_Throw(ReflectionException, _T("No such member method named {0}."), name);
