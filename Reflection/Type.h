@@ -314,6 +314,16 @@ public:
 		return false;
 	}
 
+	Linq<const std::pair<const nTString, natRefPointer<IMethod>>> GetNonMemberMethods() const noexcept override
+	{
+		return from(m_NonMemberMethodMap);
+	}
+
+	Linq<const std::pair<const nTString, natRefPointer<IField>>> GetNonMemberFields() const noexcept override
+	{
+		return from(m_NonMemberFieldMap);
+	}
+
 	bool EnumMember(bool recurse, Delegate<bool(ncTStr, bool, natRefPointer<IType>)> enumFunc) const override
 	{
 		for (auto&& item : m_MemberMethodMap)
@@ -339,6 +349,16 @@ public:
 		}
 
 		return false;
+	}
+
+	Linq<const std::pair<const nTString, natRefPointer<IMemberMethod>>> GetMemberMethods() const noexcept override
+	{
+		return from(m_MemberMethodMap);
+	}
+
+	Linq<const std::pair<const nTString, natRefPointer<IMemberField>>> GetMemberFields() const noexcept override
+	{
+		return from(m_MemberFieldMap);
 	}
 
 	std::type_index GetTypeIndex() const noexcept override

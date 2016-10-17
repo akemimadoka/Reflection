@@ -90,6 +90,14 @@ int main()
 
 		std::wcout << std::endl;
 
+		for (auto&& item : type2->GetMemberMethods()
+			.where([](std::pair<const nTString, natRefPointer<IMemberMethod>> const& method){ return method.second->GetAccessSpecifier() == AccessSpecifier::AccessSpecifier_public; }))
+		{
+			std::wcout << item.first << std::endl;
+		}
+
+		std::wcout << std::endl;
+
 		std::vector<std::tuple<bool, nTString, natRefPointer<IType>>> members{};
 		type2->EnumMember(true, [&members](ncTStr name, bool isMethod, natRefPointer<IType> objectType)
 		{

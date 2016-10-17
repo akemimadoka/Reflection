@@ -111,12 +111,16 @@ struct IType
 	/// @param	enumFunc	枚举函数，接受参数的含义为 非成员名，是否为方法，非方法的类型（若是方法则为nullptr），返回bool值
 	/// @return	是否因枚举函数返回true而结束枚举
 	virtual bool EnumNonMember(bool recurse, Delegate<bool(ncTStr, bool, natRefPointer<IType>)> enumFunc) const = 0;
+	virtual Linq<const std::pair<const nTString, natRefPointer<IMethod>>> GetNonMemberMethods() const noexcept = 0;
+	virtual Linq<const std::pair<const nTString, natRefPointer<IField>>> GetNonMemberFields() const noexcept = 0;
 
 	/// @brief	枚举该类型下的成员，当枚举函数返回true时立即结束枚举
 	///	@param	recurse		递归地枚举父类中的非成员
 	/// @param	enumFunc	枚举函数，接受参数的含义为 成员名，是否为方法，非方法的类型（若是方法则为nullptr），返回bool值
 	/// @return	是否因枚举函数返回true而结束枚举
 	virtual bool EnumMember(bool recurse, Delegate<bool(ncTStr, bool, natRefPointer<IType>)> enumFunc) const = 0;
+	virtual Linq<const std::pair<const nTString, natRefPointer<IMemberMethod>>> GetMemberMethods() const noexcept = 0;
+	virtual Linq<const std::pair<const nTString, natRefPointer<IMemberField>>> GetMemberFields() const noexcept = 0;
 
 	virtual std::type_index GetTypeIndex() const noexcept = 0;
 	virtual bool Equal(const IType* other) const noexcept = 0;
