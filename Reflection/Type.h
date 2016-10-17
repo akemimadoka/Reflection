@@ -56,6 +56,11 @@ public:
 		return m_BaseClasses.at(n);
 	}
 
+	Linq<const natRefPointer<IType>> GetBaseClasses() const noexcept override
+	{
+		return from(m_BaseClasses);
+	}
+
 	natRefPointer<Object> InvokeNonMember(ncTStr name, ArgumentPack const& args) override
 	{
 		auto range = m_NonMemberMethodMap.equal_range(name);

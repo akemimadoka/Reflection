@@ -24,10 +24,11 @@ natRefPointer<IType> GetType() const noexcept override\
 static Reflection::ReflectionBaseClassesRegister<Self_t_, __VA_ARGS__> _s_ReflectionBaseClassesHelper
 
 #define GENERATE_METADATA_DEFINITION(classname) Reflection::ReflectionClassRegister<classname> classname::_s_ReflectionHelper_##classname
-#define GENERATE_METADATA_DEFINITION_WITH_BASE_CLASSES(classname, ...) Reflection::ReflectionBaseClassesRegister<classname, __VA_ARGS__> classname::_s_ReflectionBaseClassesHelper
+#define GENERATE_METADATA_DEFINITION_WITH_BASE_CLASSES(classname, ...) Reflection::ReflectionBaseClassesRegister<classname, __VA_ARGS__> classname::_s_ReflectionBaseClassesHelper{}
 
 #define DECLARE_REFLECTABLE_CLASS(classname) class classname : virtual public Object
 #define DECLARE_REFLECTABLE_CLASS_WITH_BASE_CLASS(classname, baseclass) class classname : public std::enable_if_t<std::is_base_of<Object, baseclass>::value, baseclass>
+#define DECLARE_REFLECTABLE_CLASS_WITH_BASE_CLASSES(classname, ...) struct classname : __VA_ARGS__
 
 #define DECLARE_NONMEMBER_METHOD(accessspecifier, classname, methodname, id, returntype, ...) private: static Reflection::ReflectionNonMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_NonMemberMethod_##methodname##_##id##_;\
 accessspecifier: static returntype methodname(__VA_ARGS__) 

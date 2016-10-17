@@ -3,6 +3,7 @@
 #include <natRefObj.h>
 #include <natException.h>
 #include <natDelegate.h>
+#include <natLinq.h>
 
 using namespace NatsuLib;
 
@@ -91,6 +92,7 @@ struct IType
 	virtual natRefPointer<Object> Construct(ArgumentPack const& args) = 0;
 	virtual size_t GetBaseClassesCount() const noexcept = 0;
 	virtual natRefPointer<IType> GetBaseClass(size_t n) const noexcept = 0;
+	virtual Linq<const natRefPointer<IType>> GetBaseClasses() const noexcept = 0;
 	virtual natRefPointer<Object> InvokeNonMember(ncTStr name, ArgumentPack const& args) = 0;
 	virtual natRefPointer<Object> InvokeMember(natRefPointer<Object> object, ncTStr name, ArgumentPack const& args) = 0;
 	virtual natRefPointer<IMethod> GetNonMemberMethod(ncTStr name, std::initializer_list<natRefPointer<IType>> const& argTypes) = 0;

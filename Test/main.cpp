@@ -83,6 +83,13 @@ int main()
 		auto pBar = type2->Construct({ 1 });
 		std::wcout << type2->InvokeMember(pBar, _T("Test"), {})->ToString() << std::endl << std::endl;
 
+		for (auto&& item : type2->GetBaseClasses())
+		{
+			std::wcout << item->GetName() << std::endl;
+		}
+
+		std::wcout << std::endl;
+
 		std::vector<std::tuple<bool, nTString, natRefPointer<IType>>> members{};
 		type2->EnumMember(true, [&members](ncTStr name, bool isMethod, natRefPointer<IType> objectType)
 		{
