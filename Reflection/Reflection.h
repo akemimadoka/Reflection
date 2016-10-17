@@ -9,8 +9,7 @@
 
 using namespace NatsuLib;
 
-#define GENERATE_METADATA(classname) private: typedef classname Self_t_;\
-static Reflection::ReflectionClassRegister<Self_t_> _s_ReflectionHelper_##classname;\
+#define GENERATE_METADATA_IMPL(classname) private: typedef classname Self_t_;\
 public: static ncTStr GetName() noexcept\
 {\
 	return _T(#classname);\
@@ -20,11 +19,14 @@ natRefPointer<IType> GetType() const noexcept override\
 	return typeof(Self_t_);\
 }
 
-#define GENERATE_METADATA_WITH_BASE_CLASSES(classname, ...) GENERATE_METADATA(classname)\
-static Reflection::ReflectionBaseClassesRegister<Self_t_, __VA_ARGS__> _s_ReflectionBaseClassesHelper
+#define GENERATE_METADATA(classname) GENERATE_METADATA_IMPL(classname)\
+static Reflection::ReflectionBaseClassesRegister<Self_t_, Object> _s_ReflectionHelper_##classname;
 
-#define GENERATE_METADATA_DEFINITION(classname) Reflection::ReflectionClassRegister<classname> classname::_s_ReflectionHelper_##classname
-#define GENERATE_METADATA_DEFINITION_WITH_BASE_CLASSES(classname, ...) Reflection::ReflectionBaseClassesRegister<classname, __VA_ARGS__> classname::_s_ReflectionBaseClassesHelper{}
+#define GENERATE_METADATA_WITH_BASE_CLASSES(classname, ...) GENERATE_METADATA_IMPL(classname)\
+static Reflection::ReflectionBaseClassesRegister<Self_t_, __VA_ARGS__> _s_ReflectionHelper_##classname
+
+#define GENERATE_METADATA_DEFINITION(classname) Reflection::ReflectionBaseClassesRegister<classname, Object> classname::_s_ReflectionHelper_##classname{}
+#define GENERATE_METADATA_DEFINITION_WITH_BASE_CLASSES(classname, ...) Reflection::ReflectionBaseClassesRegister<classname, __VA_ARGS__> classname::_s_ReflectionHelper_##classname{}
 
 #define DECLARE_REFLECTABLE_CLASS(classname) class classname : virtual public Object
 #define DECLARE_REFLECTABLE_CLASS_WITH_BASE_CLASS(classname, baseclass) class classname : public std::enable_if_t<std::is_base_of<Object, baseclass>::value, baseclass>
