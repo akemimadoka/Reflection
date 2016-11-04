@@ -30,12 +30,6 @@ struct Object
 	}
 
 	template <typename T>
-	static std::enable_if_t<std::is_base_of<Object, T>::value, natRefPointer<Object>> Box(T& obj)
-	{
-		return{ &obj };
-	}
-
-	template <typename T>
 	static std::enable_if_t<std::is_base_of<Object, T>::value, natRefPointer<Object>> Box(T&& obj)
 	{
 		return make_ref<T>(std::move(obj));

@@ -32,6 +32,10 @@ static Reflection::ReflectionBaseClassesRegister<Self_t_, __VA_ARGS__> _s_Reflec
 #define DECLARE_REFLECTABLE_CLASS_WITH_BASE_CLASS(classname, baseclass) class classname : public std::enable_if_t<std::is_base_of<Object, baseclass>::value, baseclass>
 #define DECLARE_REFLECTABLE_CLASS_WITH_BASE_CLASSES(classname, ...) struct classname : __VA_ARGS__
 
+#define DECLARE_REFLECTABLE_INTERFACE(classname) struct classname : virtual Object
+#define DECLARE_REFLECTABLE_INTERFACE_WITH_BASE_CLASS(classname, baseclass) struct classname : std::enable_if_t<std::is_base_of<Object, baseclass>::value, baseclass>
+#define DECLARE_REFLECTABLE_INTERFACE_WITH_BASE_CLASSES(classname, ...) struct classname : __VA_ARGS__
+
 #define DECLARE_NONMEMBER_METHOD(accessspecifier, classname, methodname, id, returntype, ...) private: static Reflection::ReflectionNonMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_NonMemberMethod_##methodname##_##id##_;\
 accessspecifier: static returntype methodname(__VA_ARGS__) 
 
@@ -149,27 +153,27 @@ accessspecifier: operator targettype() const
 #define DEFINE_CONST_CONVERSION_OPERATOR(accessspecifier, classname, targettype) DEFINE_CONST_MEMBER_METHOD(accessspecifier, classname, , ConvertTo##targettype, , natRefPointer<Object>)() const { return this->operator targettype(); }\
 classname::operator targettype() const
 
-#define DECLARE_NONMEMBER_FIELD(accessspecifier, classname, fieldtype, fieldname) private: static Reflection::ReflectionNonMemberFieldRegister<classname> _s_ReflectionHelper_##classname##_NonMemberField_##fieldtype##_##fieldname##_;\
+#define DECLARE_NONMEMBER_FIELD(accessspecifier, classname, fieldtype, fieldname) private: static Reflection::ReflectionNonMemberFieldRegister<classname> _s_ReflectionHelper_##classname##_NonMemberField_##fieldname##_;\
 accessspecifier: static fieldtype fieldname
 
-#define DEFINE_NONMEMBER_FIELD(accessspecifier, classname, fieldtype, fieldname) Reflection::ReflectionNonMemberFieldRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberField_##fieldtype##_##fieldname##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, _T(#fieldname), &classname::fieldname };\
+#define DEFINE_NONMEMBER_FIELD(accessspecifier, classname, fieldtype, fieldname) Reflection::ReflectionNonMemberFieldRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberField_##fieldname##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, _T(#fieldname), &classname::fieldname };\
 fieldtype classname::fieldname
 
-#define DECLARE_NONMEMBER_POINTER_FIELD(accessspecifier, classname, pointertotype, fieldname) private: static Reflection::ReflectionNonMemberFieldRegister<classname> _s_ReflectionHelper_##classname##_NonMemberPointerField_##pointertotype##_##fieldname##_;\
+#define DECLARE_NONMEMBER_POINTER_FIELD(accessspecifier, classname, pointertotype, fieldname) private: static Reflection::ReflectionNonMemberFieldRegister<classname> _s_ReflectionHelper_##classname##_NonMemberPointerField_##fieldname##_;\
 accessspecifier: static natRefPointer<pointertotype> fieldname
 
-#define DEFINE_NONMEMBER_POINTER_FIELD(accessspecifier, classname, pointertotype, fieldname) Reflection::ReflectionNonMemberFieldRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberPointerField_##pointertotype##_##fieldname##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, _T(#fieldname), &classname::fieldname };\
+#define DEFINE_NONMEMBER_POINTER_FIELD(accessspecifier, classname, pointertotype, fieldname) Reflection::ReflectionNonMemberFieldRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberPointerField_##fieldname##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, _T(#fieldname), &classname::fieldname };\
 natRefPointer<pointertotype> classname::fieldname
 
-#define DECLARE_MEMBER_FIELD(accessspecifier, classname, fieldtype, fieldname) private: static Reflection::ReflectionMemberFieldRegister<classname> _s_ReflectionHelper_##classname##_MemberField_##fieldtype##_##fieldname##_;\
+#define DECLARE_MEMBER_FIELD(accessspecifier, classname, fieldtype, fieldname) private: static Reflection::ReflectionMemberFieldRegister<classname> _s_ReflectionHelper_##classname##_MemberField_##fieldname##_;\
 accessspecifier: fieldtype fieldname
 
-#define DEFINE_MEMBER_FIELD(accessspecifier, classname, fieldtype, fieldname) Reflection::ReflectionMemberFieldRegister<classname> classname::_s_ReflectionHelper_##classname##_MemberField_##fieldtype##_##fieldname##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, _T(#fieldname), &classname::fieldname }
+#define DEFINE_MEMBER_FIELD(accessspecifier, classname, fieldtype, fieldname) Reflection::ReflectionMemberFieldRegister<classname> classname::_s_ReflectionHelper_##classname##_MemberField_##fieldname##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, _T(#fieldname), &classname::fieldname }
 
-#define DECLARE_MEMBER_POINTER_FIELD(accessspecifier, classname, pointertotype, fieldname) private: static Reflection::ReflectionMemberFieldRegister<classname> _s_ReflectionHelper_##classname##_MemberPointerField_##pointertotype##_##fieldname##_;\
+#define DECLARE_MEMBER_POINTER_FIELD(accessspecifier, classname, pointertotype, fieldname) private: static Reflection::ReflectionMemberFieldRegister<classname> _s_ReflectionHelper_##classname##_MemberPointerField_##fieldname##_;\
 accessspecifier: natRefPointer<pointertotype> fieldname
 
-#define DEFINE_MEMBER_POINTER_FIELD(accessspecifier, classname, pointertotype, fieldname) Reflection::ReflectionMemberFieldRegister<classname> classname::_s_ReflectionHelper_##classname##_MemberPointerField_##pointertotype##_##fieldname##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, _T(#fieldname), &classname::fieldname }
+#define DEFINE_MEMBER_POINTER_FIELD(accessspecifier, classname, pointertotype, fieldname) Reflection::ReflectionMemberFieldRegister<classname> classname::_s_ReflectionHelper_##classname##_MemberPointerField_##fieldname##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, _T(#fieldname), &classname::fieldname }
 
 #define typeof(type) Reflection::GetInstance().GetType<type>()
 #define typeofexp(expression) Reflection::GetInstance().GetType<decltype(expression)>()
@@ -313,13 +317,22 @@ private:
 
 #include "Object.h"
 
-template <typename T>
+template <typename T, typename Test = void>
 class BoxedObject final
 	: public Object
 {
 public:
-	friend struct Object;
+	[[noreturn]] T& GetObj()
+	{
+		nat_Throw(ReflectionException, _T("Cannot get object."));
+	}
+};
 
+template <typename T>
+class BoxedObject<T, std::void_t<std::enable_if_t<std::disjunction<std::is_integral<T>, std::is_floating_point<T>>::value>>> final
+	: public Object
+{
+public:
 	typedef BoxedObject Self_t_;
 	static ncTStr GetName() noexcept;
 	natRefPointer<IType> GetType() const noexcept override
@@ -351,6 +364,11 @@ public:
 	}
 
 	operator T const&() const noexcept
+	{
+		return m_Obj;
+	}
+
+	T& GetObj() noexcept
 	{
 		return m_Obj;
 	}
@@ -392,6 +410,11 @@ public:
 	{
 		return typeid(void);
 	}
+
+	[[noreturn]] void GetObj()
+	{
+		nat_Throw(ReflectionException, _T("Cannot get Object."));
+	}
 };
 
 template <typename T>
@@ -415,6 +438,7 @@ void Type<T>::RegisterBaseClasses(std::initializer_list<natRefPointer<IType>> ba
 #undef INITIALIZEBOXEDOBJECT
 #define INITIALIZEBOXEDOBJECT(type, alias) typedef BoxedObject<type> alias
 
+INITIALIZEBOXEDOBJECT(bool, Bool);
 INITIALIZEBOXEDOBJECT(char, Char);
 INITIALIZEBOXEDOBJECT(wchar_t, WChar);
 INITIALIZEBOXEDOBJECT(int8_t, SByte);
@@ -438,32 +462,56 @@ std::enable_if_t<std::is_integral<T>::value || std::is_floating_point<T>::value,
 namespace rdetail_
 {
 	template <typename T, bool test>
-	struct boxed_type_impl
+	struct boxed_type_impl_
 	{
 		typedef T type;
 	};
 
 	template <typename T>
-	struct boxed_type_impl<T, true>
+	struct boxed_type_impl_<T, true>
 	{
 		typedef BoxedObject<T> type;
+	};
+
+	template <typename T>
+	struct boxed_type_impl
+		: boxed_type_impl_<T, std::disjunction<std::is_integral<T>, std::is_floating_point<T>, std::is_void<T>>::value>
+	{
+	};
+
+	template <typename T>
+	struct boxed_type_impl<natRefPointer<T>>
+		: boxed_type_impl<T>
+	{
 	};
 }
 
 template <typename T>
 struct boxed_type
-	: ::rdetail_::boxed_type_impl<T, std::disjunction<std::is_integral<T>, std::is_floating_point<T>, std::is_void<T>>::value>
-{
-};
-
-template <typename T>
-struct boxed_type<natRefPointer<T>>
-	: boxed_type<T>
+	: ::rdetail_::boxed_type_impl<std::remove_cv_t<std::remove_reference_t<T>>>
 {
 };
 
 template <typename T>
 using boxed_type_t = typename boxed_type<T>::type;
+
+template <typename T>
+struct is_boxed
+	: std::false_type
+{
+};
+
+template <typename T>
+struct is_boxed<BoxedObject<T>>
+	: std::true_type
+{
+};
+
+template <typename T>
+bool Type<T>::IsBoxed() const noexcept
+{
+	return is_boxed<T>::value;
+}
 
 template <typename T>
 T& Object::Unbox()
@@ -486,7 +534,7 @@ T& Object::Unbox()
 	}
 	if (typeindex == typeid(BoxedObject<T>))
 	{
-		return static_cast<BoxedObject<T>*>(this)->m_Obj;
+		return static_cast<BoxedObject<T>*>(this)->GetObj();
 	}
 	// 开销巨大所以留在最后判断
 	auto Ttype = typeof(boxed_type_t<T>);

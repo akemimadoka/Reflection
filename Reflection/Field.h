@@ -2,15 +2,57 @@
 #include "Interface.h"
 #include "Object.h"
 
-template <typename T>
-struct IsRefPointer
-	: std::false_type
+namespace rdetail_
 {
-};
+	template <typename T>
+	struct FieldSetter
+	{
+		static void Set(T& val, natRefPointer<Object> const& pObj)
+		{
+			val = pObj->Unbox<std::remove_cv_t<std::remove_reference_t<T>>>();
+		}
+	};
+
+	template <typename T>
+	struct FieldSetter<natRefPointer<T>>
+	{
+		static void Set(natRefPointer<T>& val, natRefPointer<Object> const& pObj)
+		{
+			if (!pObj)
+			{
+				val = nullptr;
+			}
+			else
+			{
+				auto tmp = static_cast<natRefPointer<T>>(pObj);
+				if (!tmp)
+				{
+					nat_Throw(ReflectionException, _T("pObj cannot be assign to val."));
+				}
+				else
+				{
+					val = static_cast<natRefPointer<T>>(pObj);
+				}
+			}
+		}
+	};
+
+	template <typename T>
+	struct IsRefPointerImpl
+		: std::false_type
+	{
+	};
+
+	template <typename T>
+	struct IsRefPointerImpl<natRefPointer<T>>
+		: std::true_type
+	{
+	};
+}
 
 template <typename T>
-struct IsRefPointer<natRefPointer<T>>
-	: std::true_type
+struct IsRefPointer
+	: rdetail_::IsRefPointerImpl<std::remove_cv_t<std::remove_reference_t<T>>>
 {
 };
 
@@ -56,7 +98,8 @@ public:
 
 	void Write(natRefPointer<Object> value) override
 	{
-		*m_Field = value->Unbox<T>();
+		//*m_Field = value->Unbox<T>();
+		rdetail_::FieldSetter<std::remove_volatile_t<std::remove_reference_t<T>>>::Set(*m_Field, value);
 	}
 
 private:
@@ -103,7 +146,8 @@ public:
 
 	void WriteFrom(natRefPointer<Object> object, natRefPointer<Object> value) override
 	{
-		object->Unbox<Class>().*m_Field = value->Unbox<T>();
+		//object->Unbox<Class>().*m_Field = value->Unbox<T>();
+		rdetail_::FieldSetter<std::remove_volatile_t<std::remove_reference_t<T>>>::Set(object->Unbox<Class>().*m_Field, value);
 	}
 
 private:

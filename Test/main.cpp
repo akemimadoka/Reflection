@@ -2,6 +2,19 @@
 #include <chrono>
 #include <Reflection.h>
 
+/*DECLARE_REFLECTABLE_INTERFACE(ISerializable)
+{
+	GENERATE_METADATA(ISerializable);
+
+	DECLARE_PURE_VIRTUAL_MEMBER_METHOD(public, ISerializable, , Serialize, , void, );
+	DECLARE_PURE_VIRTUAL_MEMBER_METHOD(public, ISerializable, , Deserialize, , void, );
+};
+
+GENERATE_METADATA_DEFINITION(ISerializable);
+
+DEFINE_PURE_VIRTUAL_MEMBER_METHOD(public, ISerializable, , Serialize, , void, );
+DEFINE_PURE_VIRTUAL_MEMBER_METHOD(public, ISerializable, , Deserialize, , void, );*/
+
 DECLARE_REFLECTABLE_CLASS(Foo)
 {
 	GENERATE_METADATA(Foo)
@@ -12,6 +25,7 @@ DECLARE_REFLECTABLE_CLASS(Foo)
 	DECLARE_CONST_MEMBER_METHOD(public, Foo, , GetTest, 0, int);
 	DECLARE_CONST_MEMBER_METHOD(public, Foo, , GetTest, 1, int, int);
 	DECLARE_VIRTUAL_MEMBER_METHOD(public, Foo, , Test, , int);
+	DECLARE_MEMBER_METHOD(public, Foo, , Test1, , void);
 
 	DECLARE_MEMBER_FIELD(private, Foo, int, m_Test);
 };
@@ -41,9 +55,14 @@ DEFINE_VIRTUAL_MEMBER_METHOD(public, Foo, , Test, , int)()
 	return ++m_Test;
 }
 
+DEFINE_MEMBER_METHOD(public, Foo, , Test1, , void)()
+{
+	std::cout << m_Test << std::endl;
+}
+
 DEFINE_MEMBER_FIELD(private, Foo, int, m_Test);
 
-DECLARE_REFLECTABLE_CLASS(Bar), public Foo
+DECLARE_REFLECTABLE_CLASS_WITH_BASE_CLASS(Bar, Foo)
 {
 	GENERATE_METADATA_WITH_BASE_CLASSES(Bar, Foo);
 
@@ -119,7 +138,7 @@ int main()
 			}
 		}
 
-		std::wcout << std::boolalpha << type2->IsExtendFrom(type) << std::endl;
+		std::wcout << std::boolalpha << type2->IsExtendFrom(type) << std::endl << type2->IsBoxed() << std::endl << (*type2->GetMemberFields().where([](auto&& pair) { return pair.first == _T("m_Test"); }).begin()).second->GetType()->IsBoxed() << std::endl;
 
 		// Benchmark
 		/*auto Test = type2->GetMemberMethod(_T("Test"), {});

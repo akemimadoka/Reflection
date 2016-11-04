@@ -41,6 +41,8 @@ public:
 		return T::GetName();
 	}
 
+	bool IsBoxed() const noexcept override;
+
 	natRefPointer<Object> Construct(ArgumentPack const& args) override
 	{
 		return InvokeNonMember(CONSTRUCTOR_NAME_STR, args);
@@ -316,12 +318,22 @@ public:
 
 	Linq<const std::pair<const nTString, natRefPointer<IMethod>>> GetNonMemberMethods() const noexcept override
 	{
-		return from(m_NonMemberMethodMap);
+		Linq<const std::pair<const nTString, natRefPointer<IMethod>>> ret = from(m_NonMemberMethodMap);
+		for (auto&& item : m_BaseClasses)
+		{
+			ret = ret.concat(item->GetNonMemberMethods());
+		}
+		return ret;
 	}
 
 	Linq<const std::pair<const nTString, natRefPointer<IField>>> GetNonMemberFields() const noexcept override
 	{
-		return from(m_NonMemberFieldMap);
+		Linq<const std::pair<const nTString, natRefPointer<IField>>> ret = from(m_NonMemberFieldMap);
+		for (auto&& item : m_BaseClasses)
+		{
+			ret = ret.concat(item->GetNonMemberFields());
+		}
+		return ret;
 	}
 
 	bool EnumMember(bool recurse, Delegate<bool(ncTStr, bool, natRefPointer<IType>)> enumFunc) const override
@@ -353,12 +365,22 @@ public:
 
 	Linq<const std::pair<const nTString, natRefPointer<IMemberMethod>>> GetMemberMethods() const noexcept override
 	{
-		return from(m_MemberMethodMap);
+		Linq<const std::pair<const nTString, natRefPointer<IMemberMethod>>> ret = from(m_MemberMethodMap);
+		for (auto&& item : m_BaseClasses)
+		{
+			ret = ret.concat(item->GetMemberMethods());
+		}
+		return ret;
 	}
 
 	Linq<const std::pair<const nTString, natRefPointer<IMemberField>>> GetMemberFields() const noexcept override
 	{
-		return from(m_MemberFieldMap);
+		Linq<const std::pair<const nTString, natRefPointer<IMemberField>>> ret = from(m_MemberFieldMap);
+		for (auto&& item : m_BaseClasses)
+		{
+			ret = ret.concat(item->GetMemberFields());
+		}
+		return ret;
 	}
 
 	std::type_index GetTypeIndex() const noexcept override

@@ -32,6 +32,7 @@ natRefPointer<IType> Reflection::GetType(ncTStr typeName)
 	return _T(#alias);\
 }
 
+INITIALIZEBOXEDOBJECT(bool, Bool);
 INITIALIZEBOXEDOBJECT(char, Char);
 INITIALIZEBOXEDOBJECT(wchar_t, WChar);
 INITIALIZEBOXEDOBJECT(int8_t, SByte);
@@ -45,6 +46,11 @@ INITIALIZEBOXEDOBJECT(uint64_t, ULong);
 INITIALIZEBOXEDOBJECT(float, Float);
 INITIALIZEBOXEDOBJECT(double, Double);
 INITIALIZEBOXEDOBJECT(void, Void);
+
+nTString Bool::_toString(const Bool* pThis) noexcept
+{
+	return pThis->m_Obj ? _T("true") : _T("false");
+}
 
 nTString Char::_toString(const Char* pThis) noexcept
 {
@@ -120,6 +126,7 @@ nTString Double::_toString(const Double* pThis) noexcept
 Reflection::Reflection()
 {
 	RegisterType<Object>();
+	INITIALIZEBOXEDOBJECT(bool, Bool);
 	INITIALIZEBOXEDOBJECT(char, Char);
 	INITIALIZEBOXEDOBJECT(wchar_t, WChar);
 	INITIALIZEBOXEDOBJECT(int8_t, SByte);

@@ -89,6 +89,7 @@ struct IType
 	virtual void RegisterMemberField(ncTStr name, natRefPointer<IMemberField> field) = 0;
 
 	virtual ncTStr GetName() const noexcept = 0;
+	virtual bool IsBoxed() const noexcept = 0;
 	virtual natRefPointer<Object> Construct(ArgumentPack const& args) = 0;
 	virtual size_t GetBaseClassesCount() const noexcept = 0;
 	virtual natRefPointer<IType> GetBaseClass(size_t n) const noexcept = 0;
