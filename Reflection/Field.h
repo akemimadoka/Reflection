@@ -27,12 +27,10 @@ namespace rdetail_
 				auto tmp = static_cast<natRefPointer<T>>(pObj);
 				if (!tmp)
 				{
-					nat_Throw(ReflectionException, _T("pObj cannot be assign to val."));
+					nat_Throw(ReflectionException, _T("pObj cannot assign to val."));
 				}
-				else
-				{
-					val = static_cast<natRefPointer<T>>(pObj);
-				}
+				
+				val = static_cast<natRefPointer<T>>(pObj);
 			}
 		}
 	};

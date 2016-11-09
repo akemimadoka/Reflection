@@ -22,8 +22,8 @@ DECLARE_REFLECTABLE_CLASS(Foo)
 	DECLARE_CONSTRUCTOR(public, Foo, explicit, , int);
 	DECLARE_DEFAULT_COPYCONSTRUCTOR(public, Foo);
 	DECLARE_DEFAULT_MOVECONSTRUCTOR(public, Foo);
-	DECLARE_CONST_MEMBER_METHOD(public, Foo, , GetTest, 0, int);
-	DECLARE_CONST_MEMBER_METHOD(public, Foo, , GetTest, 1, int, int);
+	DECLARE_CONST_MEMBER_METHOD(public, Foo, , GetTest, 0, int const&);
+	DECLARE_CONST_MEMBER_METHOD(public, Foo, , GetTest, 1, int, int const&);
 	DECLARE_VIRTUAL_MEMBER_METHOD(public, Foo, , Test, , int);
 	DECLARE_MEMBER_METHOD(public, Foo, , Test1, , void);
 
@@ -40,12 +40,12 @@ DEFINE_CONSTRUCTOR(public, Foo, , , int)(int value)
 DEFINE_DEFAULT_COPYCONSTRUCTOR(public, Foo)
 DEFINE_DEFAULT_MOVECONSTRUCTOR(public, Foo)
 
-DEFINE_CONST_MEMBER_METHOD(public, Foo, , GetTest, 0, int)() const
+DEFINE_CONST_MEMBER_METHOD(public, Foo, , GetTest, 0, int const&)() const
 {
 	return m_Test;
 }
 
-DEFINE_CONST_MEMBER_METHOD(public, Foo, , GetTest, 1, int, int)(int arg) const
+DEFINE_CONST_MEMBER_METHOD(public, Foo, , GetTest, 1, int, int const&)(int const& arg) const
 {
 	return m_Test + arg;
 }
@@ -174,5 +174,10 @@ int main()
 	{
 		std::cout << e.what() << std::endl;
 	}
+
+#ifdef _WIN32
 	system("pause");
+#else
+	std::cin.get();
+#endif
 }

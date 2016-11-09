@@ -20,10 +20,10 @@ natRefPointer<IType> GetType() const noexcept override\
 }
 
 #define GENERATE_METADATA(classname) GENERATE_METADATA_IMPL(classname)\
-static Reflection::ReflectionBaseClassesRegister<Self_t_, Object> _s_ReflectionHelper_##classname;
+private: static Reflection::ReflectionBaseClassesRegister<Self_t_, Object> _s_ReflectionHelper_##classname;
 
 #define GENERATE_METADATA_WITH_BASE_CLASSES(classname, ...) GENERATE_METADATA_IMPL(classname)\
-static Reflection::ReflectionBaseClassesRegister<Self_t_, __VA_ARGS__> _s_ReflectionHelper_##classname
+private: static Reflection::ReflectionBaseClassesRegister<Self_t_, __VA_ARGS__> _s_ReflectionHelper_##classname
 
 #define GENERATE_METADATA_DEFINITION(classname) Reflection::ReflectionBaseClassesRegister<classname, Object> classname::_s_ReflectionHelper_##classname{}
 #define GENERATE_METADATA_DEFINITION_WITH_BASE_CLASSES(classname, ...) Reflection::ReflectionBaseClassesRegister<classname, __VA_ARGS__> classname::_s_ReflectionHelper_##classname{}
@@ -179,7 +179,7 @@ accessspecifier: natRefPointer<pointertotype> fieldname
 #define typeofexp(expression) Reflection::GetInstance().GetType<decltype(expression)>()
 #define typeofname(name) Reflection::GetInstance().GetType(name)
 
-class Reflection
+namespace rdetail_
 {
 	template <typename... T>
 	struct ExplicitRegisterClass;
@@ -187,11 +187,7 @@ class Reflection
 	template <typename T, typename... Rest>
 	struct ExplicitRegisterClass<T, Rest...>
 	{
-		static void Execute()
-		{
-			GetInstance().RegisterType<T>();
-			ExplicitRegisterClass<Rest...>::Execute();
-		}
+		static void Execute();
 	};
 
 	template <>
@@ -201,7 +197,10 @@ class Reflection
 		{
 		}
 	};
+}
 
+class Reflection
+{
 public:
 	template <typename T>
 	struct ReflectionClassRegister
@@ -217,7 +216,7 @@ public:
 	{
 		ReflectionBaseClassesRegister()
 		{
-			ExplicitRegisterClass<T, Base...>::Execute();
+			rdetail_::ExplicitRegisterClass<T, Base...>::Execute();
 			GetInstance().RegisterBaseClasses<T, Base...>();
 		}
 	};
@@ -314,6 +313,13 @@ private:
 
 	std::unordered_map<std::type_index, natRefPointer<IType>> m_TypeTable;
 };
+
+template <typename T, typename ... Rest>
+void rdetail_::ExplicitRegisterClass<T, Rest...>::Execute()
+{
+	Reflection::GetInstance().RegisterType<T>();
+	ExplicitRegisterClass<Rest...>::Execute();
+}
 
 #include "Object.h"
 
@@ -413,7 +419,7 @@ public:
 
 	[[noreturn]] void GetObj()
 	{
-		nat_Throw(ReflectionException, _T("Cannot get Object."));
+		nat_Throw(ReflectionException, _T("Cannot get object."));
 	}
 };
 

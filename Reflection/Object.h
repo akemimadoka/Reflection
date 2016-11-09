@@ -24,15 +24,9 @@ struct Object
 	T& Unbox();
 
 	template <typename T>
-	static std::enable_if_t<std::is_base_of<Object, T>::value, natRefPointer<Object>> Box(T const& obj)
-	{
-		return make_ref<T>(obj);
-	}
-
-	template <typename T>
 	static std::enable_if_t<std::is_base_of<Object, T>::value, natRefPointer<Object>> Box(T&& obj)
 	{
-		return make_ref<T>(std::move(obj));
+		return make_ref<T>(std::forward<T>(obj));
 	}
 
 	template <typename T>

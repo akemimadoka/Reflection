@@ -357,7 +357,7 @@ class NonMemberMethod<Ret(*)(Args...)>
 public:
 	typedef Ret(*MethodType)(Args...);
 
-	explicit NonMemberMethod(AccessSpecifier accessSpecifier, MethodType method)
+	NonMemberMethod(AccessSpecifier accessSpecifier, MethodType method)
 		: m_AccessSpecifier{ accessSpecifier }, m_Func(method), m_Types(MethodHelper<MethodType>::GetType())
 	{
 	}
@@ -418,7 +418,7 @@ class MemberMethod<Ret(Class::*)(Args...)>
 public:
 	typedef	Ret(Class::*MethodType)(Args...);
 
-	explicit MemberMethod(AccessSpecifier accessSpecifier, MethodType method)
+	MemberMethod(AccessSpecifier accessSpecifier, MethodType method)
 		: m_AccessSpecifier{ accessSpecifier }, m_Func(method), m_Types(MethodHelper<MethodType>::GetType())
 	{
 	}
