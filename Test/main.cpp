@@ -6,14 +6,14 @@
 {
 	GENERATE_METADATA(ISerializable);
 
-	DECLARE_PURE_VIRTUAL_MEMBER_METHOD(public, ISerializable, , Serialize, , void, );
-	DECLARE_PURE_VIRTUAL_MEMBER_METHOD(public, ISerializable, , Deserialize, , void, );
+	DECLARE_PURE_VIRTUAL_MEMBER_METHOD(public, ISerializable, , Serialize, , size_t, );
+	DECLARE_PURE_VIRTUAL_MEMBER_METHOD(public, ISerializable, , Deserialize, , size_t, );
 };
 
 GENERATE_METADATA_DEFINITION(ISerializable);
 
-DEFINE_PURE_VIRTUAL_MEMBER_METHOD(public, ISerializable, , Serialize, , void, );
-DEFINE_PURE_VIRTUAL_MEMBER_METHOD(public, ISerializable, , Deserialize, , void, );*/
+DEFINE_PURE_VIRTUAL_MEMBER_METHOD(public, ISerializable, , Serialize, , size_t, );
+DEFINE_PURE_VIRTUAL_MEMBER_METHOD(public, ISerializable, , Deserialize, , size_t, );*/
 
 DECLARE_REFLECTABLE_CLASS(Foo)
 {
@@ -91,7 +91,7 @@ int main()
 		auto type = typeofname(_T("Foo"));
 		auto pFoo = type->Construct({ 1 });
 		std::wcout << pFoo->ToString() << std::endl << type->InvokeMember(pFoo, _T("GetTest"), {})->ToString() << std::endl << type->InvokeMember(pFoo, _T("GetTest"), { 1 })->ToString() << std::endl;
-		
+
 		std::wcout << type->InvokeMember(pFoo, _T("Test"), {})->ToString() << std::endl;
 		std::wcout << type->ReadMemberField(pFoo, _T("m_Test"))->ToString() << std::endl;
 

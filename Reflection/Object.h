@@ -36,7 +36,7 @@ struct Object
 	}
 
 	template <typename T>
-	static std::enable_if_t<std::is_integral<T>::value || std::is_floating_point<T>::value, natRefPointer<Object>> Box(T obj);
+	static std::enable_if_t<std::is_arithmetic<T>::value, natRefPointer<Object>> Box(T obj);
 
 	static natRefPointer<Object> Box();
 };

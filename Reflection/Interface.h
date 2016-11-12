@@ -126,8 +126,10 @@ struct IType
 	virtual std::type_index GetTypeIndex() const noexcept = 0;
 	virtual bool Equal(const IType* other) const noexcept = 0;
 
-	//virtual bool IsConvertable(natRefPointer<IType> other) const noexcept = 0;
-	virtual natRefPointer<Object> ConvertTo(natRefPointer<Object> object, natRefPointer<IType> toType) const = 0;
-
 	virtual bool IsExtendFrom(natRefPointer<IType> type) const = 0;
+};
+
+struct IAttribute
+	: natRefObjImpl<Interface>
+{
 };

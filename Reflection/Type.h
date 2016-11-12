@@ -393,21 +393,6 @@ public:
 		return GetTypeIndex() == other->GetTypeIndex();
 	}
 
-	// TODO: Implement converting function
-	/*bool IsConvertable(natRefPointer<IType> other) const noexcept override
-	{
-	}*/
-
-	natRefPointer<Object> ConvertTo(natRefPointer<Object> object, natRefPointer<IType> toType) const override
-	{
-		if (object->GetType().Get() != static_cast<const IType*>(this))
-		{
-			nat_Throw(ReflectionException, _T("object is not a type of {0}."), GetName());
-		}
-
-		return toType->Construct(ArgumentPack{ object });
-	}
-
 	bool IsExtendFrom(natRefPointer<IType> type) const override
 	{
 		if (!type)

@@ -1,6 +1,7 @@
 #pragma once
 #include "Interface.h"
 #include "Object.h"
+#include "Convert.h"
 
 namespace rdetail_
 {
@@ -9,7 +10,7 @@ namespace rdetail_
 	{
 		static void Set(T& val, natRefPointer<Object> const& pObj)
 		{
-			val = pObj->Unbox<std::remove_cv_t<std::remove_reference_t<T>>>();
+			val = Convert::ConvertTo<std::remove_cv_t<std::remove_reference_t<T>>>(pObj)->Unbox<std::remove_cv_t<std::remove_reference_t<T>>>();
 		}
 	};
 
@@ -27,10 +28,11 @@ namespace rdetail_
 				auto tmp = static_cast<natRefPointer<T>>(pObj);
 				if (!tmp)
 				{
-					nat_Throw(ReflectionException, _T("pObj cannot assign to val."));
+					tmp = Convert::ConvertTo<std::remove_cv_t<std::remove_reference_t<T>>>(pObj);
+					//nat_Throw(ReflectionException, _T("pObj cannot assign to val."));
 				}
 				
-				val = static_cast<natRefPointer<T>>(pObj);
+				val = std::move(tmp);
 			}
 		}
 	};

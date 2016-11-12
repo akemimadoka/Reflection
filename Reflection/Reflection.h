@@ -3,8 +3,8 @@
 #include <natException.h>
 #include <unordered_map>
 #include <typeindex>
-#include "Method.h"
-#include "Field.h"
+//#include "Method.h"
+//#include "Field.h"
 #include "Type.h"
 
 using namespace NatsuLib;
@@ -179,6 +179,9 @@ accessspecifier: natRefPointer<pointertotype> fieldname
 #define typeofexp(expression) Reflection::GetInstance().GetType<decltype(expression)>()
 #define typeofname(name) Reflection::GetInstance().GetType(name)
 
+#define nameof_(name) _T(#name)
+#define nameof(name) ((static_cast<void>(name), nameof_(name)))
+
 namespace rdetail_
 {
 	template <typename... T>
@@ -334,30 +337,45 @@ public:
 	}
 };
 
+#undef INITIALIZEBOXEDOBJECT
+#define INITIALIZEBOXEDOBJECT(type, alias) private: static Reflection::ReflectionNonMemberMethodRegister<Self_t_> s_BoxedObject_Constructor_##type##_;\
+public: BoxedObject(type value) : m_Obj{ static_cast<UnderlyingType>(value) } {}\
+static natRefPointer<Object> Constructor(type value) { return make_ref<BoxedObject>(std::move(value)); }
+
+#pragma warning (push)
+#pragma warning (disable : 4800)
+
 template <typename T>
-class BoxedObject<T, std::void_t<std::enable_if_t<std::disjunction<std::is_integral<T>, std::is_floating_point<T>>::value>>> final
+class BoxedObject<T, std::void_t<std::enable_if_t<std::is_arithmetic<T>::value>>> final
 	: public Object
 {
 public:
 	typedef BoxedObject Self_t_;
+	typedef T UnderlyingType;
 	static ncTStr GetName() noexcept;
 	natRefPointer<IType> GetType() const noexcept override
 	{
-		return Reflection::GetInstance().GetType<Self_t_>();
+		return typeof(Self_t_);
 	}
 
 	BoxedObject()
 		: m_Obj{}
 	{
 	}
-	BoxedObject(T const& obj)
-		: m_Obj(obj)
-	{
-	}
-	BoxedObject(T&& obj)
-		: m_Obj(std::move(obj))
-	{
-	}
+
+	INITIALIZEBOXEDOBJECT(bool, Bool);
+	INITIALIZEBOXEDOBJECT(char, Char);
+	INITIALIZEBOXEDOBJECT(wchar_t, WChar);
+	INITIALIZEBOXEDOBJECT(int8_t, SByte);
+	INITIALIZEBOXEDOBJECT(uint8_t, Byte);
+	INITIALIZEBOXEDOBJECT(int16_t, Short);
+	INITIALIZEBOXEDOBJECT(uint16_t, UShort);
+	INITIALIZEBOXEDOBJECT(int32_t, Integer);
+	INITIALIZEBOXEDOBJECT(uint32_t, UInteger);
+	INITIALIZEBOXEDOBJECT(int64_t, Long);
+	INITIALIZEBOXEDOBJECT(uint64_t, ULong);
+	INITIALIZEBOXEDOBJECT(float, Float);
+	INITIALIZEBOXEDOBJECT(double, Double);
 
 	operator T() const noexcept
 	{
@@ -394,6 +412,8 @@ private:
 
 	T m_Obj;
 };
+
+#pragma warning (pop)
 
 template <>
 class BoxedObject<void> final
@@ -460,7 +480,7 @@ INITIALIZEBOXEDOBJECT(double, Double);
 INITIALIZEBOXEDOBJECT(void, Void);
 
 template <typename T>
-std::enable_if_t<std::is_integral<T>::value || std::is_floating_point<T>::value, natRefPointer<Object>> Object::Box(T obj)
+std::enable_if_t<std::is_arithmetic<T>::value, natRefPointer<Object>> Object::Box(T obj)
 {
 	return make_ref<BoxedObject<T>>(obj);
 }
@@ -481,7 +501,7 @@ namespace rdetail_
 
 	template <typename T>
 	struct boxed_type_impl
-		: boxed_type_impl_<T, std::disjunction<std::is_integral<T>, std::is_floating_point<T>, std::is_void<T>>::value>
+		: boxed_type_impl_<T, std::disjunction<std::is_arithmetic<T>, std::is_void<T>>::value>
 	{
 	};
 
@@ -568,8 +588,31 @@ natRefPointer<IType> Reflection::GetType()
 	nat_Throw(ReflectionException, _T("Type not found."));
 }
 
+#include "Field.h"
+
 template <typename Class, typename T>
 natRefPointer<IType> MemberField<T(Class::*)>::GetType()
 {
 	return Reflection::GetInstance().GetType<boxed_type_t<T>>();
+}
+
+#include "Method.h"
+
+#include "Convert.h"
+#include "ArgumentPack.h"
+
+inline natRefPointer<Object> Convert::ConvertTo(natRefPointer<Object> obj, natRefPointer<IType> toType)
+{
+	if (obj->GetType()->Equal(toType))
+	{
+		return obj;
+	}
+
+	return toType->Construct({ obj });
+}
+
+template <typename T>
+natRefPointer<Object> Convert::ConvertTo(natRefPointer<Object> obj)
+{
+	return ConvertTo(obj, typeof(T));
 }

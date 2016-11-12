@@ -194,6 +194,9 @@
     <ClCompile Include="Reflection.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ArgumentPack.h" />
+    <ClInclude Include="Attribute.h" />
+    <ClInclude Include="Convert.h" />
     <ClInclude Include="Field.h" />
     <ClInclude Include="Interface.h" />
     <ClInclude Include="Method.h" />
