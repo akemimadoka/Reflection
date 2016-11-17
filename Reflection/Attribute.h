@@ -1,5 +1,31 @@
 #pragma once
 #include "Interface.h"
+#include "Object.h"
+#include <vector>
+
+#define WITH(...) AttributeSet{ __VA_ARGS__ }
+
+struct IAttribute
+	: Object
+{
+	static ncTStr GetName() noexcept
+	{
+		return _T("IAttribute");
+	}
+
+	natRefPointer<IType> GetType() const noexcept override;
+};
+
+struct AttributeSet
+{
+	template <typename... Attr>
+	AttributeSet(Attr&&... attributes)
+		: Attributes{ make_ref<Attr>(std::forward<Attr>(attributes))... }
+	{
+	}
+
+	std::vector<natRefPointer<IAttribute>> Attributes;
+};
 
 class AttributeUsage
 	: public IAttribute
@@ -16,10 +42,22 @@ public:
 		All = 0xFF,
 	};
 
-	constexpr explicit AttributeUsage(uint8_t target) noexcept
+	AttributeUsage() noexcept
+		: AttributeUsage(All)
+	{
+	}
+
+	explicit AttributeUsage(uint8_t target) noexcept
 		: m_Target(target)
 	{
 	}
+
+	static ncTStr GetName() noexcept
+	{
+		return _T("AttributeUsage");
+	}
+
+	natRefPointer<IType> GetType() const noexcept override;
 
 	uint8_t GetTarget() const noexcept
 	{

@@ -3,9 +3,8 @@
 #include <natException.h>
 #include <unordered_map>
 #include <typeindex>
-//#include "Method.h"
-//#include "Field.h"
 #include "Type.h"
+#include "Attribute.h"
 
 using namespace NatsuLib;
 
@@ -19,14 +18,14 @@ natRefPointer<IType> GetType() const noexcept override\
 	return typeof(Self_t_);\
 }
 
-#define GENERATE_METADATA(classname) GENERATE_METADATA_IMPL(classname)\
+#define GENERATE_METADATA(classname, attributes) GENERATE_METADATA_IMPL(classname)\
 private: static Reflection::ReflectionBaseClassesRegister<Self_t_, Object> _s_ReflectionHelper_##classname;
 
-#define GENERATE_METADATA_WITH_BASE_CLASSES(classname, ...) GENERATE_METADATA_IMPL(classname)\
+#define GENERATE_METADATA_WITH_BASE_CLASSES(classname, attributes, ...) GENERATE_METADATA_IMPL(classname)\
 private: static Reflection::ReflectionBaseClassesRegister<Self_t_, __VA_ARGS__> _s_ReflectionHelper_##classname
 
-#define GENERATE_METADATA_DEFINITION(classname) Reflection::ReflectionBaseClassesRegister<classname, Object> classname::_s_ReflectionHelper_##classname{}
-#define GENERATE_METADATA_DEFINITION_WITH_BASE_CLASSES(classname, ...) Reflection::ReflectionBaseClassesRegister<classname, __VA_ARGS__> classname::_s_ReflectionHelper_##classname{}
+#define GENERATE_METADATA_DEFINITION(classname, attributes) Reflection::ReflectionBaseClassesRegister<classname, Object> classname::_s_ReflectionHelper_##classname{ attributes }
+#define GENERATE_METADATA_DEFINITION_WITH_BASE_CLASSES(classname, attributes, ...) Reflection::ReflectionBaseClassesRegister<classname, __VA_ARGS__> classname::_s_ReflectionHelper_##classname{ attributes }
 
 #define DECLARE_REFLECTABLE_CLASS(classname) class classname : virtual public Object
 #define DECLARE_REFLECTABLE_CLASS_WITH_BASE_CLASS(classname, baseclass) class classname : public std::enable_if_t<std::is_base_of<Object, baseclass>::value, baseclass>
@@ -208,18 +207,19 @@ public:
 	template <typename T>
 	struct ReflectionClassRegister
 	{
-		ReflectionClassRegister()
+		explicit ReflectionClassRegister(AttributeSet&& attributes)
 		{
-			GetInstance().RegisterType<T>();
+			GetInstance().RegisterType<T>()->RegisterAttributes(std::move(attributes));
 		}
 	};
 
 	template <typename T, typename... Base>
 	struct ReflectionBaseClassesRegister
 	{
-		ReflectionBaseClassesRegister()
+		explicit ReflectionBaseClassesRegister(AttributeSet&& attributes)
 		{
 			rdetail_::ExplicitRegisterClass<T, Base...>::Execute();
+			GetInstance().RegisterAttributes<T>(std::move(attributes));
 			GetInstance().RegisterBaseClasses<T, Base...>();
 		}
 	};
@@ -267,12 +267,22 @@ public:
 	static Reflection& GetInstance();
 
 	template <typename Class>
-	void RegisterType()
+	natRefPointer<Type<Class>> RegisterType()
 	{
-		if (m_TypeTable.find(typeid(Class)) == m_TypeTable.end())
+		auto iter = m_TypeTable.find(typeid(Class));
+		if (iter == m_TypeTable.end())
 		{
-			m_TypeTable.emplace(typeid(Class), make_ref<Type<Class>>());
+			auto type = make_ref<Type<Class>>();
+			m_TypeTable.emplace(typeid(Class), type);
+			return type;
 		}
+		return iter->second;
+	}
+
+	template <typename Class>
+	void RegisterAttributes(AttributeSet&& attributes)
+	{
+		GetType<Class>()->RegisterAttributes(std::move(attributes));
 	}
 
 	template <typename Class, typename... Base>
@@ -282,28 +292,16 @@ public:
 	}
 
 	template <typename Class, typename Func>
-	void RegisterNonMemberMethod(AccessSpecifier accessSpecifier, ncTStr name, Func method)
-	{
-		GetType<Class>()->RegisterNonMemberMethod(name, make_ref<NonMemberMethod<Func>>(accessSpecifier, method));
-	}
+	void RegisterNonMemberMethod(AccessSpecifier accessSpecifier, ncTStr name, Func method);
 
 	template <typename Class, typename Func>
-	void RegisterMemberMethod(AccessSpecifier accessSpecifier, ncTStr name, Func method)
-	{
-		GetType<Class>()->RegisterMemberMethod(name, make_ref<MemberMethod<Func>>(accessSpecifier, method));
-	}
+	void RegisterMemberMethod(AccessSpecifier accessSpecifier, ncTStr name, Func method);
 
 	template <typename Class, typename Field>
-	void RegisterNonMemberField(AccessSpecifier accessSpecifier, ncTStr name, Field field)
-	{
-		GetType<Class>()->RegisterNonMemberField(name, make_ref<NonMemberField<Field>>(accessSpecifier, field));
-	}
+	void RegisterNonMemberField(AccessSpecifier accessSpecifier, ncTStr name, Field field);
 
 	template <typename Class, typename Field>
-	void RegisterMemberField(AccessSpecifier accessSpecifier, ncTStr name, Field field)
-	{
-		GetType<Class>()->RegisterMemberField(name, make_ref<MemberField<Field>>(accessSpecifier, field));
-	}
+	void RegisterMemberField(AccessSpecifier accessSpecifier, ncTStr name, Field field);
 
 	template <typename Class>
 	natRefPointer<IType> GetType();
@@ -339,7 +337,7 @@ public:
 
 #undef INITIALIZEBOXEDOBJECT
 #define INITIALIZEBOXEDOBJECT(type, alias) private: static Reflection::ReflectionNonMemberMethodRegister<Self_t_> s_BoxedObject_Constructor_##type##_;\
-public: BoxedObject(type value) : m_Obj{ static_cast<UnderlyingType>(value) } {}\
+public: BoxedObject(type value) : m_Obj { static_cast<UnderlyingType>(value) } {}\
 static natRefPointer<Object> Constructor(type value) { return make_ref<BoxedObject>(std::move(value)); }
 
 #pragma warning (push)
@@ -596,7 +594,31 @@ natRefPointer<IType> MemberField<T(Class::*)>::GetType()
 	return Reflection::GetInstance().GetType<boxed_type_t<T>>();
 }
 
+template <typename Class, typename Field>
+void Reflection::RegisterNonMemberField(AccessSpecifier accessSpecifier, ncTStr name, Field field)
+{
+	GetType<Class>()->RegisterNonMemberField(name, make_ref<NonMemberField<Field>>(accessSpecifier, field));
+}
+
+template <typename Class, typename Field>
+void Reflection::RegisterMemberField(AccessSpecifier accessSpecifier, ncTStr name, Field field)
+{
+	GetType<Class>()->RegisterMemberField(name, make_ref<MemberField<Field>>(accessSpecifier, field));
+}
+
 #include "Method.h"
+
+template <typename Class, typename Func>
+void Reflection::RegisterNonMemberMethod(AccessSpecifier accessSpecifier, ncTStr name, Func method)
+{
+	GetType<Class>()->RegisterNonMemberMethod(name, make_ref<NonMemberMethod<Func>>(accessSpecifier, method));
+}
+
+template <typename Class, typename Func>
+void Reflection::RegisterMemberMethod(AccessSpecifier accessSpecifier, ncTStr name, Func method)
+{
+	GetType<Class>()->RegisterMemberMethod(name, make_ref<MemberMethod<Func>>(accessSpecifier, method));
+}
 
 #include "Convert.h"
 #include "ArgumentPack.h"

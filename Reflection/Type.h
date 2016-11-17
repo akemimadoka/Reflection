@@ -1,5 +1,6 @@
 #pragma once
 #include "Interface.h"
+#include "Attribute.h"
 #include <unordered_map>
 #include <natMisc.h>
 
@@ -13,6 +14,26 @@ class Type
 {
 public:
 	typedef T type;
+
+	void UncheckedRegisterAttributes(AttributeSet&& attributes)
+	{
+		m_Attributes = move(attributes.Attributes);
+	}
+
+	void RegisterAttributes(AttributeSet&& attributes) override
+	{
+		for (auto&& item : attributes.Attributes)
+		{
+			auto type = item->GetType();
+			auto usage = type->GetAttribute<AttributeUsage>();
+			if (usage && !(usage->GetTarget() & AttributeUsage::Class))
+			{
+				nat_Throw(ReflectionException, _T("Attribute {0} cannot apply to class."), type->GetName());
+			}
+		}
+
+		UncheckedRegisterAttributes(std::move(attributes));
+	}
 
 	void RegisterBaseClasses(std::initializer_list<natRefPointer<IType>> baseClasses) override;
 
@@ -411,7 +432,34 @@ public:
 		return false;
 	}
 
+	bool HasAttribute(std::type_index type) const override
+	{
+		for (auto&& item : m_Attributes)
+		{
+			if (type == typeid(*item))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	natRefPointer<IAttribute> GetAttribute(std::type_index type) const override
+	{
+		for (auto&& item : m_Attributes)
+		{
+			if (type == typeid(*item))
+			{
+				return item;
+			}
+		}
+
+		return {};
+	}
+
 private:
+	std::vector<natRefPointer<IAttribute>> m_Attributes;
 	std::vector<natRefPointer<IType>> m_BaseClasses;
 	std::unordered_multimap<nTString, natRefPointer<IMethod>> m_NonMemberMethodMap;
 	std::unordered_multimap<nTString, natRefPointer<IMemberMethod>> m_MemberMethodMap;

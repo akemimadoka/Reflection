@@ -25,6 +25,16 @@ natRefPointer<IType> Reflection::GetType(ncTStr typeName)
 	nat_Throw(ReflectionException, _T("Type not found."));
 }
 
+natRefPointer<IType> IAttribute::GetType() const noexcept
+{
+	return typeof(IAttribute);
+}
+
+natRefPointer<IType> AttributeUsage::GetType() const noexcept
+{
+	return typeof(AttributeUsage);
+}
+
 #undef INITIALIZEBOXEDOBJECT
 #define INITIALIZEBOXEDOBJECT(type, alias) ncTStr BoxedObject<type>::GetName() noexcept\
 {\
@@ -44,11 +54,12 @@ INITIALIZEBOXEDOBJECT(uint32_t, UInteger);
 INITIALIZEBOXEDOBJECT(int64_t, Long);
 INITIALIZEBOXEDOBJECT(uint64_t, ULong);
 INITIALIZEBOXEDOBJECT(float, Float);
+
 INITIALIZEBOXEDOBJECT(double, Double);
 INITIALIZEBOXEDOBJECT(void, Void);
 
 #undef INITIALIZEBOXEDOBJECT
-#define INITIALIZEBOXEDOBJECT(type, alias) Reflection::ReflectionNonMemberMethodRegister<INITIALIZEBOXEDOBJECTFOR> INITIALIZEBOXEDOBJECTFOR::s_BoxedObject_Constructor_##type##_{ AccessSpecifier::AccessSpecifier_public, _T("Constructor"), static_cast<natRefPointer<Object>(*)(type)>(&INITIALIZEBOXEDOBJECTFOR::Constructor) };
+#define INITIALIZEBOXEDOBJECT(type, alias) Reflection::ReflectionNonMemberMethodRegister<INITIALIZEBOXEDOBJECTFOR> INITIALIZEBOXEDOBJECTFOR::s_BoxedObject_Constructor_##type##_{ AccessSpecifier::AccessSpecifier_public, _T("Constructor"), static_cast<natRefPointer<Object>(*)(type)>(&INITIALIZEBOXEDOBJECTFOR::Constructor) }
 
 #undef INITIALIZEBOXEDOBJECTFOR
 #define INITIALIZEBOXEDOBJECTFOR Bool
@@ -350,6 +361,8 @@ nTString Double::_toString(const Double* pThis) noexcept
 Reflection::Reflection()
 {
 	RegisterType<Object>();
+	RegisterType<IAttribute>();
+	RegisterType<AttributeUsage>()->UncheckedRegisterAttributes({ AttributeUsage{AttributeUsage::Class} });
 	INITIALIZEBOXEDOBJECT(bool, Bool);
 	INITIALIZEBOXEDOBJECT(char, Char);
 	INITIALIZEBOXEDOBJECT(wchar_t, WChar);

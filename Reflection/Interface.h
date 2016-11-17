@@ -76,12 +76,16 @@ struct IMemberField
 	virtual void WriteFrom(natRefPointer<Object> object, natRefPointer<Object> value) = 0;
 };
 
+struct IAttribute;
+struct AttributeSet;
+
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief	类型接口
 ////////////////////////////////////////////////////////////////////////////////
 struct IType
 	: Interface
 {
+	virtual void RegisterAttributes(AttributeSet&& attributes) = 0;
 	virtual void RegisterBaseClasses(std::initializer_list<natRefPointer<IType>> baseClasses) = 0;
 	virtual void RegisterNonMemberMethod(ncTStr name, natRefPointer<IMethod> method) = 0;
 	virtual void RegisterMemberMethod(ncTStr name, natRefPointer<IMemberMethod> method) = 0;
@@ -127,9 +131,19 @@ struct IType
 	virtual bool Equal(const IType* other) const noexcept = 0;
 
 	virtual bool IsExtendFrom(natRefPointer<IType> type) const = 0;
-};
 
-struct IAttribute
-	: natRefObjImpl<Interface>
-{
+	virtual bool HasAttribute(std::type_index type) const = 0;
+	virtual natRefPointer<IAttribute> GetAttribute(std::type_index type) const = 0;
+
+	template <typename Attr>
+	bool HasAttribute() const
+	{
+		return HasAttribute(typeid(Attr));
+	}
+
+	template <typename Attr>
+	natRefPointer<Attr> GetAttribute() const
+	{
+		return GetAttribute(typeid(Attr));
+	}
 };

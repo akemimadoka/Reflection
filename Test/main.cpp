@@ -15,9 +15,23 @@ GENERATE_METADATA_DEFINITION(ISerializable);
 DEFINE_PURE_VIRTUAL_MEMBER_METHOD(public, ISerializable, , Serialize, , size_t, );
 DEFINE_PURE_VIRTUAL_MEMBER_METHOD(public, ISerializable, , Deserialize, , size_t, );*/
 
+DECLARE_REFLECTABLE_CLASS_WITH_BASE_CLASSES(TestAttribute, IAttribute)
+{
+	GENERATE_METADATA_WITH_BASE_CLASSES(TestAttribute, WITH(AttributeUsage(AttributeUsage::Constructor | AttributeUsage::Method)), IAttribute);
+
+	DECLARE_CONST_MEMBER_METHOD(public, TestAttribute, , Test, , int);
+};
+
+GENERATE_METADATA_DEFINITION_WITH_BASE_CLASSES(TestAttribute, WITH(AttributeUsage(AttributeUsage::Constructor | AttributeUsage::Method)), IAttribute);
+
+DEFINE_CONST_MEMBER_METHOD(public, TestAttribute, , Test, , int)() const
+{
+	return 1;
+}
+
 DECLARE_REFLECTABLE_CLASS(Foo)
 {
-	GENERATE_METADATA(Foo)
+	GENERATE_METADATA(Foo, WITH(TestAttribute()))
 
 	DECLARE_CONSTRUCTOR(public, Foo, explicit, , int);
 	DECLARE_DEFAULT_COPYCONSTRUCTOR(public, Foo);
@@ -30,7 +44,7 @@ DECLARE_REFLECTABLE_CLASS(Foo)
 	DECLARE_MEMBER_FIELD(private, Foo, int, m_Test);
 };
 
-GENERATE_METADATA_DEFINITION(Foo);
+GENERATE_METADATA_DEFINITION(Foo, WITH(TestAttribute()));
 
 DEFINE_CONSTRUCTOR(public, Foo, , , int)(int value)
 	: m_Test{ value }
@@ -64,13 +78,13 @@ DEFINE_MEMBER_FIELD(private, Foo, int, m_Test);
 
 DECLARE_REFLECTABLE_CLASS_WITH_BASE_CLASS(Bar, Foo)
 {
-	GENERATE_METADATA_WITH_BASE_CLASSES(Bar, Foo);
+	GENERATE_METADATA_WITH_BASE_CLASSES(Bar, WITH(), Foo);
 
 	DECLARE_CONSTRUCTOR(public, Bar, explicit, , int);
 	DECLARE_VIRTUAL_MEMBER_METHOD(public, Bar, , Test, , int);
 };
 
-GENERATE_METADATA_DEFINITION_WITH_BASE_CLASSES(Bar, Foo);
+GENERATE_METADATA_DEFINITION_WITH_BASE_CLASSES(Bar, WITH(), Foo);
 
 DEFINE_CONSTRUCTOR(public, Bar, explicit, , int)(int arg)
 	: Foo(arg)
@@ -89,6 +103,7 @@ int main()
 		std::wcout << typeof(int)->GetName() << std::endl;
 
 		auto type = typeofname(_T("Foo"));
+		std::wcout << type->GetAttribute<TestAttribute>()->Test() << std::endl;
 		auto pFoo = type->Construct({ 1 });
 		std::wcout << pFoo->ToString() << std::endl << type->InvokeMember(pFoo, _T("GetTest"), {})->ToString() << std::endl << type->InvokeMember(pFoo, _T("GetTest"), { 1 })->ToString() << std::endl;
 
