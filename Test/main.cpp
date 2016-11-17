@@ -17,12 +17,12 @@ DEFINE_PURE_VIRTUAL_MEMBER_METHOD(public, ISerializable, , Deserialize, , size_t
 
 DECLARE_REFLECTABLE_CLASS_WITH_BASE_CLASSES(TestAttribute, IAttribute)
 {
-	GENERATE_METADATA_WITH_BASE_CLASSES(TestAttribute, WITH(AttributeUsage(AttributeUsage::Constructor | AttributeUsage::Method)), IAttribute);
+	GENERATE_METADATA_WITH_BASE_CLASSES(TestAttribute, WITH(AttributeUsage(AttributeUsage::Class)), IAttribute);
 
 	DECLARE_CONST_MEMBER_METHOD(public, TestAttribute, , Test, , int);
 };
 
-GENERATE_METADATA_DEFINITION_WITH_BASE_CLASSES(TestAttribute, WITH(AttributeUsage(AttributeUsage::Constructor | AttributeUsage::Method)), IAttribute);
+GENERATE_METADATA_DEFINITION_WITH_BASE_CLASSES(TestAttribute, WITH(AttributeUsage(AttributeUsage::Class)), IAttribute);
 
 DEFINE_CONST_MEMBER_METHOD(public, TestAttribute, , Test, , int)() const
 {
