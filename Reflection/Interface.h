@@ -52,6 +52,7 @@ struct IMemberMethod
 	virtual size_t GetArgumentCount() const noexcept = 0;
 	virtual natRefPointer<IType> GetArgumentType(size_t n) const noexcept = 0;
 	virtual bool IsConstMemberMethod() const noexcept = 0;
+	virtual bool IsVirtual() const noexcept = 0;
 };
 
 struct IField

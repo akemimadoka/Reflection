@@ -100,6 +100,11 @@ int main()
 {
 	try
 	{
+		for (auto&& item : Reflection::GetInstance().GetTypes())
+		{
+			std::wcout << item->GetName() << std::endl;
+		}
+
 		std::wcout << typeof(int)->GetName() << std::endl;
 
 		auto type = typeofname(_T("Foo"));

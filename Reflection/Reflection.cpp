@@ -25,6 +25,11 @@ natRefPointer<IType> Reflection::GetType(ncTStr typeName)
 	nat_Throw(ReflectionException, _T("Type not found."));
 }
 
+Linq<const natRefPointer<IType>> Reflection::GetTypes() const
+{
+	return from(m_TypeTable).select([](auto&& pair) -> natRefPointer<IType> const& { return pair.second; });
+}
+
 natRefPointer<IType> IAttribute::GetType() const noexcept
 {
 	return typeof(IAttribute);

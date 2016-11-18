@@ -6,7 +6,7 @@
 #define WITH(...) AttributeSet{ __VA_ARGS__ }
 
 struct IAttribute
-	: Object
+	: virtual Object
 {
 	static ncTStr GetName() noexcept
 	{

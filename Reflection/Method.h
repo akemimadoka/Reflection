@@ -400,8 +400,8 @@ class MemberMethod<Ret(Class::*)(Args...)>
 public:
 	typedef	Ret(Class::*MethodType)(Args...);
 
-	MemberMethod(AccessSpecifier accessSpecifier, MethodType method)
-		: m_AccessSpecifier{ accessSpecifier }, m_Func(method), m_Types(MethodHelper<MethodType>::GetType())
+	MemberMethod(AccessSpecifier accessSpecifier, bool isVirtual, MethodType method)
+		: m_AccessSpecifier{ accessSpecifier }, m_IsVirtual{ isVirtual }, m_Func(method), m_Types(MethodHelper<MethodType>::GetType())
 	{
 	}
 
@@ -460,6 +460,11 @@ public:
 		return false;
 	}
 
+	bool IsVirtual() const noexcept override
+	{
+		return m_IsVirtual;
+	}
+
 	MethodType Get() const noexcept
 	{
 		return m_Func;
@@ -467,6 +472,7 @@ public:
 
 private:
 	AccessSpecifier m_AccessSpecifier;
+	const bool m_IsVirtual;
 	MethodType m_Func;
 	std::vector<natRefPointer<IType>> m_Types;
 };
@@ -478,8 +484,8 @@ class MemberMethod<Ret(Class::*)(Args...) const>
 public:
 	typedef	Ret(Class::*MethodType)(Args...) const;
 
-	explicit MemberMethod(AccessSpecifier accessSpecifier, MethodType method)
-		: m_AccessSpecifier{ accessSpecifier }, m_Func(method), m_Types(MethodHelper<MethodType>::GetType())
+	explicit MemberMethod(AccessSpecifier accessSpecifier, bool isVirtual, MethodType method)
+		: m_AccessSpecifier{ accessSpecifier }, m_IsVirtual{ isVirtual }, m_Func(method), m_Types(MethodHelper<MethodType>::GetType())
 	{
 	}
 
@@ -528,6 +534,11 @@ public:
 		return true;
 	}
 
+	bool IsVirtual() const noexcept override
+	{
+		return m_IsVirtual;
+	}
+
 	MethodType Get() const noexcept
 	{
 		return m_Func;
@@ -535,6 +546,7 @@ public:
 
 private:
 	AccessSpecifier m_AccessSpecifier;
+	const bool m_IsVirtual;
 	MethodType m_Func;
 	std::vector<natRefPointer<IType>> m_Types;
 };
