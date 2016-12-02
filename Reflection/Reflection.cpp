@@ -2,8 +2,10 @@
 
 #ifdef _UNICODE
 #define toTString std::to_wstring
+typedef WideStringView TStrView;
 #else
 #define toTString std::to_string
+typedef AnsiStringView TStrView;
 #endif
 
 Reflection& Reflection::GetInstance()
@@ -12,17 +14,17 @@ Reflection& Reflection::GetInstance()
 	return s_Instance;
 }
 
-natRefPointer<IType> Reflection::GetType(ncTStr typeName)
+natRefPointer<IType> Reflection::GetType(nStrView typeName)
 {
 	for (auto&& item : m_TypeTable)
 	{
-		if (!_tcscmp(item.second->GetName(), typeName))
+		if (item.second->GetName() == typeName)
 		{
 			return item.second;
 		}
 	}
 
-	nat_Throw(ReflectionException, _T("Type not found."));
+	nat_Throw(ReflectionException, "Type not found."_nv);
 }
 
 Linq<const natRefPointer<IType>> Reflection::GetTypes() const
@@ -41,30 +43,7 @@ natRefPointer<IType> AttributeUsage::GetType() const noexcept
 }
 
 #undef INITIALIZEBOXEDOBJECT
-#define INITIALIZEBOXEDOBJECT(type, alias) ncTStr BoxedObject<type>::GetName() noexcept\
-{\
-	/*return _T("BoxedObject<"## #type ##">");*/\
-	return _T(#alias);\
-}
-
-INITIALIZEBOXEDOBJECT(bool, Bool);
-INITIALIZEBOXEDOBJECT(char, Char);
-INITIALIZEBOXEDOBJECT(wchar_t, WChar);
-INITIALIZEBOXEDOBJECT(int8_t, SByte);
-INITIALIZEBOXEDOBJECT(uint8_t, Byte);
-INITIALIZEBOXEDOBJECT(int16_t, Short);
-INITIALIZEBOXEDOBJECT(uint16_t, UShort);
-INITIALIZEBOXEDOBJECT(int32_t, Integer);
-INITIALIZEBOXEDOBJECT(uint32_t, UInteger);
-INITIALIZEBOXEDOBJECT(int64_t, Long);
-INITIALIZEBOXEDOBJECT(uint64_t, ULong);
-INITIALIZEBOXEDOBJECT(float, Float);
-
-INITIALIZEBOXEDOBJECT(double, Double);
-INITIALIZEBOXEDOBJECT(void, Void);
-
-#undef INITIALIZEBOXEDOBJECT
-#define INITIALIZEBOXEDOBJECT(type, alias) Reflection::ReflectionNonMemberMethodRegister<INITIALIZEBOXEDOBJECTFOR> INITIALIZEBOXEDOBJECTFOR::s_BoxedObject_Constructor_##type##_{ AccessSpecifier::AccessSpecifier_public, _T("Constructor"), static_cast<natRefPointer<Object>(*)(type)>(&INITIALIZEBOXEDOBJECTFOR::Constructor) }
+#define INITIALIZEBOXEDOBJECT(type, alias) template <> Reflection::ReflectionNonMemberMethodRegister<INITIALIZEBOXEDOBJECTFOR> INITIALIZEBOXEDOBJECTFOR::s_BoxedObject_Constructor_##type##_ = { AccessSpecifier::AccessSpecifier_public, "Constructor"_nv, static_cast<natRefPointer<Object>(*)(type)>(&INITIALIZEBOXEDOBJECTFOR::Constructor) }
 
 #undef INITIALIZEBOXEDOBJECTFOR
 #define INITIALIZEBOXEDOBJECTFOR Bool
@@ -287,77 +266,94 @@ INITIALIZEBOXEDOBJECT(uint64_t, ULong);
 INITIALIZEBOXEDOBJECT(float, Float);
 INITIALIZEBOXEDOBJECT(double, Double);
 
-nTString Bool::_toString(const Bool* pThis) noexcept
+Reflection::ReflectionNonMemberMethodRegister<RefString> RefString::s_BoxedObject_Constructor_nString_ = { AccessSpecifier::AccessSpecifier_public, "Constructor"_nv, static_cast<natRefPointer<Object>(*)(nString)>(&RefString::Constructor) };
+
+template <>
+nString Bool::_toString(const Bool* pThis) noexcept
 {
-	return pThis->m_Obj ? _T("true") : _T("false");
+	return pThis->m_Obj ? "true"_nv : "false"_nv;
 }
 
-nTString Char::_toString(const Char* pThis) noexcept
+template <>
+nString Char::_toString(const Char* pThis) noexcept
 {
-#ifdef _UNICODE
-	return natUtil::C2Wstr(std::string{ pThis->m_Obj });
-#else
-	return { pThis->m_Obj };
-#endif
+	return AnsiStringView{ pThis->m_Obj };
 }
 
-nTString WChar::_toString(const WChar* pThis) noexcept
+template <>
+nString WChar::_toString(const WChar* pThis) noexcept
 {
-#ifdef _UNICODE
-	return { pThis->m_Obj };
-#else
-	return natUtil::W2Cstr(std::wstring{ pThis->m_Obj });
-#endif	
+	return WideStringView{ pThis->m_Obj };
 }
 
-nTString SByte::_toString(const SByte* pThis) noexcept
+template <>
+nString SByte::_toString(const SByte* pThis) noexcept
 {
-	return toTString(pThis->m_Obj);
+	const auto tmpStr{ toTString(pThis->m_Obj) };
+	return TStrView{ tmpStr.c_str(), tmpStr.size() };
 }
 
-nTString Byte::_toString(const Byte* pThis) noexcept
+template <>
+nString Byte::_toString(const Byte* pThis) noexcept
 {
-	return toTString(pThis->m_Obj);
+	const auto tmpStr{ toTString(pThis->m_Obj) };
+	return TStrView{ tmpStr.c_str(), tmpStr.size() };
 }
 
-nTString Short::_toString(const Short* pThis) noexcept
+template <>
+nString Short::_toString(const Short* pThis) noexcept
 {
-	return toTString(pThis->m_Obj);
+	const auto tmpStr{ toTString(pThis->m_Obj) };
+	return TStrView{ tmpStr.c_str(), tmpStr.size() };
 }
 
-nTString UShort::_toString(const UShort* pThis) noexcept
+template <>
+nString UShort::_toString(const UShort* pThis) noexcept
 {
-	return toTString(pThis->m_Obj);
+	const auto tmpStr{ toTString(pThis->m_Obj) };
+	return TStrView{ tmpStr.c_str(), tmpStr.size() };
 }
 
-nTString Integer::_toString(const Integer* pThis) noexcept
+template <>
+nString Integer::_toString(const Integer* pThis) noexcept
 {
-	return toTString(pThis->m_Obj);
+	const auto tmpStr{ toTString(pThis->m_Obj) };
+	return TStrView{ tmpStr.c_str(), tmpStr.size() };
 }
 
-nTString UInteger::_toString(const UInteger* pThis) noexcept
+template <>
+nString UInteger::_toString(const UInteger* pThis) noexcept
 {
-	return toTString(pThis->m_Obj);
+	const auto tmpStr{ toTString(pThis->m_Obj) };
+	return TStrView{ tmpStr.c_str(), tmpStr.size() };
 }
 
-nTString Long::_toString(const Long* pThis) noexcept
+template <>
+nString Long::_toString(const Long* pThis) noexcept
 {
-	return toTString(pThis->m_Obj);
+	const auto tmpStr{ toTString(pThis->m_Obj) };
+	return TStrView{ tmpStr.c_str(), tmpStr.size() };
 }
 
-nTString ULong::_toString(const ULong* pThis) noexcept
+template <>
+nString ULong::_toString(const ULong* pThis) noexcept
 {
-	return toTString(pThis->m_Obj);
+	const auto tmpStr{ toTString(pThis->m_Obj) };
+	return TStrView{ tmpStr.c_str(), tmpStr.size() };
 }
 
-nTString Float::_toString(const Float* pThis) noexcept
+template <>
+nString Float::_toString(const Float* pThis) noexcept
 {
-	return toTString(pThis->m_Obj);
+	const auto tmpStr{ toTString(pThis->m_Obj) };
+	return TStrView{ tmpStr.c_str(), tmpStr.size() };
 }
 
-nTString Double::_toString(const Double* pThis) noexcept
+template <>
+nString Double::_toString(const Double* pThis) noexcept
 {
-	return toTString(pThis->m_Obj);
+	const auto tmpStr{ toTString(pThis->m_Obj) };
+	return TStrView{ tmpStr.c_str(), tmpStr.size() };
 }
 
 #undef INITIALIZEBOXEDOBJECT
@@ -367,7 +363,7 @@ Reflection::Reflection()
 {
 	RegisterType<Object>();
 	RegisterType<IAttribute>();
-	RegisterType<AttributeUsage>()->UncheckedRegisterAttributes({ AttributeUsage{AttributeUsage::Class} });
+	RegisterType<AttributeUsage>()->UncheckedRegisterAttributes({ AttributeUsage{ AttributeUsage::Class } });
 	INITIALIZEBOXEDOBJECT(bool, Bool);
 	INITIALIZEBOXEDOBJECT(char, Char);
 	INITIALIZEBOXEDOBJECT(wchar_t, WChar);
@@ -381,6 +377,7 @@ Reflection::Reflection()
 	INITIALIZEBOXEDOBJECT(uint64_t, ULong);
 	INITIALIZEBOXEDOBJECT(float, Float);
 	INITIALIZEBOXEDOBJECT(double, Double);
+	INITIALIZEBOXEDOBJECT(nString, RefString);
 	INITIALIZEBOXEDOBJECT(void, Void);
 }
 
@@ -392,17 +389,12 @@ Object::~Object()
 {
 }
 
-ncTStr Object::GetName() noexcept
-{
-	return _T("Object");
-}
-
 natRefPointer<IType> Object::GetType() const noexcept
 {
 	return typeof(Object);
 }
 
-nTString Object::ToString() const noexcept
+nString Object::ToString() const noexcept
 {
 	return GetType()->GetName();
 }

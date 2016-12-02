@@ -1,7 +1,5 @@
 #pragma once
-#include <natRefObj.h>
-
-using namespace NatsuLib;
+#include "Interface.h"
 
 template <typename Class, typename... Args, size_t... i>
 natRefPointer<Object> CommonConstructor(std::tuple<Args...>&& args, std::index_sequence<i...>)
@@ -14,10 +12,13 @@ struct Object
 {
 	virtual ~Object();
 
-	static ncTStr GetName() noexcept;
+	static nStrView GetName() noexcept
+	{
+		return "Object"_nv;
+	}
 
 	virtual natRefPointer<IType> GetType() const noexcept;
-	virtual nTString ToString() const noexcept;
+	virtual nString ToString() const noexcept;
 	virtual std::type_index GetUnboxedType();
 
 	template <typename T>
@@ -36,7 +37,7 @@ struct Object
 	}
 
 	template <typename T>
-	static std::enable_if_t<std::is_arithmetic<T>::value, natRefPointer<Object>> Box(T obj);
+	static std::enable_if_t<std::disjunction<std::is_arithmetic<T>, std::is_same<T, nString>>::value, natRefPointer<Object>> Box(T obj);
 
 	static natRefPointer<Object> Box();
 };

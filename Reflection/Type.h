@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <natMisc.h>
 
-#define STR(x) L#x
+#define STR(x) #x##_nv
 #define CONSTRUCTOR_NAME Constructor
 #define CONSTRUCTOR_NAME_STR STR(Constructor)
 
@@ -28,7 +28,7 @@ public:
 			auto usage = type->GetAttribute<AttributeUsage>();
 			if (usage && !(usage->GetTarget() & AttributeUsage::Class))
 			{
-				nat_Throw(ReflectionException, _T("Attribute {0} cannot apply to class."), type->GetName());
+				nat_Throw(ReflectionException, "Attribute {0} cannot apply to class."_nv, type->GetName());
 			}
 		}
 
@@ -37,27 +37,27 @@ public:
 
 	void RegisterBaseClasses(std::initializer_list<natRefPointer<IType>> baseClasses) override;
 
-	void RegisterNonMemberMethod(ncTStr name, natRefPointer<IMethod> method) override
+	void RegisterNonMemberMethod(nStrView name, natRefPointer<IMethod> method) override
 	{
 		m_NonMemberMethodMap.emplace(name, method);
 	}
 
-	void RegisterMemberMethod(ncTStr name, natRefPointer<IMemberMethod> method) override
+	void RegisterMemberMethod(nStrView name, natRefPointer<IMemberMethod> method) override
 	{
 		m_MemberMethodMap.emplace(name, method);
 	}
 
-	void RegisterNonMemberField(ncTStr name, natRefPointer<IField> field) override
+	void RegisterNonMemberField(nStrView name, natRefPointer<IField> field) override
 	{
 		m_NonMemberFieldMap.emplace(name, field);
 	}
 
-	void RegisterMemberField(ncTStr name, natRefPointer<IMemberField> field) override
+	void RegisterMemberField(nStrView name, natRefPointer<IMemberField> field) override
 	{
 		m_MemberFieldMap.emplace(name, field);
 	}
 
-	ncTStr GetName() const noexcept override
+	nStrView GetName() const noexcept override
 	{
 		return T::GetName();
 	}
@@ -84,7 +84,7 @@ public:
 		return from(m_BaseClasses);
 	}
 
-	natRefPointer<Object> InvokeNonMember(ncTStr name, ArgumentPack const& args) override
+	natRefPointer<Object> InvokeNonMember(nStrView name, ArgumentPack const& args) override
 	{
 		auto range = m_NonMemberMethodMap.equal_range(name);
 		if (range.first == range.second)
@@ -100,7 +100,7 @@ public:
 					// if all, rethrow below
 				}
 			}
-			nat_Throw(ReflectionException, _T("No such nonmember method named {0}."), name);
+			nat_Throw(ReflectionException, "No such nonmember method named {0}."_nv, name);
 		}
 
 		for (auto&& item : make_range(range.first, range.second))
@@ -111,10 +111,10 @@ public:
 			}
 		}
 
-		nat_Throw(ReflectionException, _T("None of overloaded nonmember method named {0} can be invoked with given args."), name);
+		nat_Throw(ReflectionException, "None of overloaded nonmember method named {0} can be invoked with given args."_nv, name);
 	}
 
-	natRefPointer<Object> InvokeMember(natRefPointer<Object> object, ncTStr name, ArgumentPack const& args) override
+	natRefPointer<Object> InvokeMember(natRefPointer<Object> object, nStrView name, ArgumentPack const& args) override
 	{
 		auto range = m_MemberMethodMap.equal_range(name);
 		if (range.first == range.second)
@@ -130,7 +130,7 @@ public:
 					// if all, rethrow below
 				}
 			}
-			nat_Throw(ReflectionException, _T("No such member method named {0}."), name);
+			nat_Throw(ReflectionException, "No such member method named {0}."_nv, name);
 		}
 
 		for (auto&& item : make_range(range.first, range.second))
@@ -141,10 +141,10 @@ public:
 			}
 		}
 
-		nat_Throw(ReflectionException, _T("None of overloaded member method named {0} can be invoked with given args."), name);
+		nat_Throw(ReflectionException, "None of overloaded member method named {0} can be invoked with given args."_nv, name);
 	}
 
-	natRefPointer<IMethod> GetNonMemberMethod(ncTStr name, std::initializer_list<natRefPointer<IType>> const& argTypes) override
+	natRefPointer<IMethod> GetNonMemberMethod(nStrView name, std::initializer_list<natRefPointer<IType>> const& argTypes) override
 	{
 		auto range = m_NonMemberMethodMap.equal_range(name);
 		if (range.first == range.second)
@@ -160,7 +160,7 @@ public:
 					// if all, rethrow below
 				}
 			}
-			nat_Throw(ReflectionException, _T("No such nonmember method named {0}."), name);
+			nat_Throw(ReflectionException, "No such nonmember method named {0}."_nv, name);
 		}
 
 		for (auto&& item : make_range(range.first, range.second))
@@ -180,10 +180,10 @@ public:
 			continue;
 		}
 
-		nat_Throw(ReflectionException, _T("None of overloaded nonmember method named {0} can be invoked with given args."), name);
+		nat_Throw(ReflectionException, "None of overloaded nonmember method named {0} can be invoked with given args."_nv, name);
 	}
 
-	natRefPointer<IMemberMethod> GetMemberMethod(ncTStr name, std::initializer_list<natRefPointer<IType>> const& argTypes) override
+	natRefPointer<IMemberMethod> GetMemberMethod(nStrView name, std::initializer_list<natRefPointer<IType>> const& argTypes) override
 	{
 		auto range = m_MemberMethodMap.equal_range(name);
 		if (range.first == range.second)
@@ -199,14 +199,14 @@ public:
 					// if all, rethrow below
 				}
 			}
-			nat_Throw(ReflectionException, _T("No such member method named {0}."), name);
+			nat_Throw(ReflectionException, "No such member method named {0}."_nv, name);
 		}
 
 		for (auto&& item : make_range(range.first, range.second))
 		{
-			if (item.second->GetArgumentCount() == argTypes.size())
+			if (item.second->GetArgumentCount() == size(argTypes))
 			{
-				for (size_t i = 0; i < argTypes.size(); ++i)
+				for (size_t i = 0; i < size(argTypes); ++i)
 				{
 					if (!item.second->GetArgumentType(i)->Equal(std::next(begin(argTypes), i)->Get()))
 					{
@@ -219,109 +219,109 @@ public:
 			continue;
 		}
 
-		nat_Throw(ReflectionException, _T("None of overloaded member method named {0} can be invoked with given args."), name);
+		nat_Throw(ReflectionException, "None of overloaded member method named {0} can be invoked with given args."_nv, name);
 	}
 
-	bool IsNonMemberFieldPointer(ncTStr name) override
+	bool IsNonMemberFieldPointer(nStrView name) override
 	{
 		auto iter = m_NonMemberFieldMap.find(name);
 		if (iter == m_NonMemberFieldMap.end())
 		{
-			nat_Throw(ReflectionException, _T("No such member field named {0}."), name);
+			nat_Throw(ReflectionException, "No such member field named {0}."_nv, name);
 		}
 
 		return iter->second->IsPointer();
 	}
 
-	bool IsMemberFieldPointer(ncTStr name) override
+	bool IsMemberFieldPointer(nStrView name) override
 	{
 		auto iter = m_MemberFieldMap.find(name);
 		if (iter == m_MemberFieldMap.end())
 		{
-			nat_Throw(ReflectionException, _T("No such member field named {0}."), name);
+			nat_Throw(ReflectionException, "No such member field named {0}."_nv, name);
 		}
 
 		return iter->second->IsPointer();
 	}
 
-	natRefPointer<Object> ReadNonMemberField(ncTStr name) override
+	natRefPointer<Object> ReadNonMemberField(nStrView name) override
 	{
 		auto iter = m_NonMemberFieldMap.find(name);
 		if (iter == m_NonMemberFieldMap.end())
 		{
-			nat_Throw(ReflectionException, _T("No such member field named {0}."), name);
+			nat_Throw(ReflectionException, "No such member field named {0}."_nv, name);
 		}
 
 		return iter->second->Read();
 	}
 
-	natRefPointer<Object> ReadMemberField(natRefPointer<Object> object, ncTStr name) override
+	natRefPointer<Object> ReadMemberField(natRefPointer<Object> object, nStrView name) override
 	{
 		auto iter = m_MemberFieldMap.find(name);
 		if (iter == m_MemberFieldMap.end())
 		{
-			nat_Throw(ReflectionException, _T("No such member field named {0}."), name);
+			nat_Throw(ReflectionException, "No such member field named {0}."_nv, name);
 		}
 
 		return iter->second->ReadFrom(object);
 	}
 
-	void WriteNonMemberField(ncTStr name, natRefPointer<Object> value) override
+	void WriteNonMemberField(nStrView name, natRefPointer<Object> value) override
 	{
 		auto iter = m_NonMemberFieldMap.find(name);
 		if (iter == m_NonMemberFieldMap.end())
 		{
-			nat_Throw(ReflectionException, _T("No such member field named {0}."), name);
+			nat_Throw(ReflectionException, "No such member field named {0}."_nv, name);
 		}
 
 		iter->second->Write(value);
 	}
 
-	void WriteMemberField(natRefPointer<Object> object, ncTStr name, natRefPointer<Object> value) override
+	void WriteMemberField(natRefPointer<Object> object, nStrView name, natRefPointer<Object> value) override
 	{
 		auto iter = m_MemberFieldMap.find(name);
 		if (iter == m_MemberFieldMap.end())
 		{
-			nat_Throw(ReflectionException, _T("No such member field named {0}."), name);
+			nat_Throw(ReflectionException, "No such member field named {0}."_nv, name);
 		}
 
 		iter->second->WriteFrom(object, value);
 	}
 	
-	natRefPointer<IField> GetNonMemberField(ncTStr name) override
+	natRefPointer<IField> GetNonMemberField(nStrView name) override
 	{
 		auto iter = m_NonMemberFieldMap.find(name);
 		if (iter == m_NonMemberFieldMap.end())
 		{
-			nat_Throw(ReflectionException, _T("No such member field named {0}."), name);
+			nat_Throw(ReflectionException, "No such member field named {0}."_nv, name);
 		}
 
 		return iter->second;
 	}
 
-	natRefPointer<IMemberField> GetMemberField(ncTStr name) override
+	natRefPointer<IMemberField> GetMemberField(nStrView name) override
 	{
 		auto iter = m_MemberFieldMap.find(name);
 		if (iter == m_MemberFieldMap.end())
 		{
-			nat_Throw(ReflectionException, _T("No such member field named {0}."), name);
+			nat_Throw(ReflectionException, "No such member field named {0}."_nv, name);
 		}
 
 		return iter->second;
 	}
 
-	bool EnumNonMember(bool recurse, Delegate<bool(ncTStr, bool, natRefPointer<IType>)> enumFunc) const override
+	bool EnumNonMember(bool recurse, Delegate<bool(nStrView, bool, natRefPointer<IType>)> enumFunc) const override
 	{
 		for (auto&& item : m_NonMemberMethodMap)
 		{
-			if (enumFunc(item.first.c_str(), true, {}))
+			if (enumFunc(item.first.GetView(), true, {}))
 			{
 				return true;
 			}
 		}
 		for (auto&& item : m_NonMemberFieldMap)
 		{
-			if (enumFunc(item.first.c_str(), false, item.second->GetType()))
+			if (enumFunc(item.first.GetView(), false, item.second->GetType()))
 			{
 				return true;
 			}
@@ -337,9 +337,9 @@ public:
 		return false;
 	}
 
-	Linq<const std::pair<const nTString, natRefPointer<IMethod>>> GetNonMemberMethods() const noexcept override
+	Linq<const std::pair<const nString, natRefPointer<IMethod>>> GetNonMemberMethods() const noexcept override
 	{
-		Linq<const std::pair<const nTString, natRefPointer<IMethod>>> ret = from(m_NonMemberMethodMap);
+		Linq<const std::pair<const nString, natRefPointer<IMethod>>> ret = from(m_NonMemberMethodMap);
 		for (auto&& item : m_BaseClasses)
 		{
 			ret = ret.concat(item->GetNonMemberMethods());
@@ -347,9 +347,9 @@ public:
 		return ret;
 	}
 
-	Linq<const std::pair<const nTString, natRefPointer<IField>>> GetNonMemberFields() const noexcept override
+	Linq<const std::pair<const nString, natRefPointer<IField>>> GetNonMemberFields() const noexcept override
 	{
-		Linq<const std::pair<const nTString, natRefPointer<IField>>> ret = from(m_NonMemberFieldMap);
+		Linq<const std::pair<const nString, natRefPointer<IField>>> ret = from(m_NonMemberFieldMap);
 		for (auto&& item : m_BaseClasses)
 		{
 			ret = ret.concat(item->GetNonMemberFields());
@@ -357,18 +357,18 @@ public:
 		return ret;
 	}
 
-	bool EnumMember(bool recurse, Delegate<bool(ncTStr, bool, natRefPointer<IType>)> enumFunc) const override
+	bool EnumMember(bool recurse, Delegate<bool(nStrView, bool, natRefPointer<IType>)> enumFunc) const override
 	{
 		for (auto&& item : m_MemberMethodMap)
 		{
-			if (enumFunc(item.first.c_str(), true, {}))
+			if (enumFunc(item.first.GetView(), true, {}))
 			{
 				return true;
 			}
 		}
 		for (auto&& item : m_MemberFieldMap)
 		{
-			if (enumFunc(item.first.c_str(), false, item.second->GetType()))
+			if (enumFunc(item.first.GetView(), false, item.second->GetType()))
 			{
 				return true;
 			}
@@ -384,9 +384,9 @@ public:
 		return false;
 	}
 
-	Linq<const std::pair<const nTString, natRefPointer<IMemberMethod>>> GetMemberMethods() const noexcept override
+	Linq<const std::pair<const nString, natRefPointer<IMemberMethod>>> GetMemberMethods() const noexcept override
 	{
-		Linq<const std::pair<const nTString, natRefPointer<IMemberMethod>>> ret = from(m_MemberMethodMap);
+		Linq<const std::pair<const nString, natRefPointer<IMemberMethod>>> ret = from(m_MemberMethodMap);
 		for (auto&& item : m_BaseClasses)
 		{
 			ret = ret.concat(item->GetMemberMethods());
@@ -394,9 +394,9 @@ public:
 		return ret;
 	}
 
-	Linq<const std::pair<const nTString, natRefPointer<IMemberField>>> GetMemberFields() const noexcept override
+	Linq<const std::pair<const nString, natRefPointer<IMemberField>>> GetMemberFields() const noexcept override
 	{
-		Linq<const std::pair<const nTString, natRefPointer<IMemberField>>> ret = from(m_MemberFieldMap);
+		Linq<const std::pair<const nString, natRefPointer<IMemberField>>> ret = from(m_MemberFieldMap);
 		for (auto&& item : m_BaseClasses)
 		{
 			ret = ret.concat(item->GetMemberFields());
@@ -461,8 +461,8 @@ public:
 private:
 	std::vector<natRefPointer<IAttribute>> m_Attributes;
 	std::vector<natRefPointer<IType>> m_BaseClasses;
-	std::unordered_multimap<nTString, natRefPointer<IMethod>> m_NonMemberMethodMap;
-	std::unordered_multimap<nTString, natRefPointer<IMemberMethod>> m_MemberMethodMap;
-	std::unordered_map<nTString, natRefPointer<IField>> m_NonMemberFieldMap;
-	std::unordered_map<nTString, natRefPointer<IMemberField>> m_MemberFieldMap;
+	std::unordered_multimap<nString, natRefPointer<IMethod>> m_NonMemberMethodMap;
+	std::unordered_multimap<nString, natRefPointer<IMemberMethod>> m_MemberMethodMap;
+	std::unordered_map<nString, natRefPointer<IField>> m_NonMemberFieldMap;
+	std::unordered_map<nString, natRefPointer<IMemberField>> m_MemberFieldMap;
 };

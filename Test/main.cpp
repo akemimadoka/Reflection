@@ -107,20 +107,20 @@ int main()
 
 		std::wcout << typeof(int)->GetName() << std::endl;
 
-		auto type = typeofname(_T("Foo"));
+		auto type = typeofname("Foo"_nv);
 		std::wcout << type->GetAttribute<TestAttribute>()->Test() << std::endl;
 		auto pFoo = type->Construct({ 1 });
-		std::wcout << pFoo->ToString() << std::endl << type->InvokeMember(pFoo, _T("GetTest"), {})->ToString() << std::endl << type->InvokeMember(pFoo, _T("GetTest"), { 1 })->ToString() << std::endl;
+		std::wcout << pFoo->ToString() << std::endl << type->InvokeMember(pFoo, "GetTest"_nv, {})->ToString() << std::endl << type->InvokeMember(pFoo, "GetTest"_nv, { 1 })->ToString() << std::endl;
 
-		std::wcout << type->InvokeMember(pFoo, _T("Test"), {})->ToString() << std::endl;
-		std::wcout << type->ReadMemberField(pFoo, _T("m_Test"))->ToString() << std::endl;
+		std::wcout << type->InvokeMember(pFoo, "Test"_nv, {})->ToString() << std::endl;
+		std::wcout << type->ReadMemberField(pFoo, "m_Test"_nv)->ToString() << std::endl;
 
 		decltype(auto) UnboxedFoo = pFoo->Unbox<Foo>();
 		std::wcout << UnboxedFoo.GetTest() << std::endl;
 
-		auto type2 = typeofname(_T("Bar"));
+		auto type2 = typeofname("Bar"_nv);
 		auto pBar = type2->Construct({ 1 });
-		std::wcout << type2->InvokeMember(pBar, _T("Test"), {})->ToString() << std::endl << std::endl;
+		std::wcout << type2->InvokeMember(pBar, "Test"_nv, {})->ToString() << std::endl << std::endl;
 
 		for (auto&& item : type2->GetBaseClasses())
 		{
@@ -130,7 +130,7 @@ int main()
 		std::wcout << std::endl;
 
 		for (auto&& item : type2->GetMemberMethods()
-			.where([](std::pair<const nTString, natRefPointer<IMemberMethod>> const& method)
+			.where([](std::pair<const nString, natRefPointer<IMemberMethod>> const& method)
 				{
 					return method.second->GetAccessSpecifier() == AccessSpecifier::AccessSpecifier_public;
 				}))
@@ -140,8 +140,8 @@ int main()
 
 		std::wcout << std::endl;
 
-		std::vector<std::tuple<bool, nTString, natRefPointer<IType>>> members{};
-		type2->EnumMember(true, [&members](ncTStr name, bool isMethod, natRefPointer<IType> objectType)
+		std::vector<std::tuple<bool, nString, natRefPointer<IType>>> members{};
+		type2->EnumMember(true, [&members](nStrView name, bool isMethod, natRefPointer<IType> objectType)
 		{
 			members.emplace_back(isMethod, name, objectType);
 			return false;
@@ -150,18 +150,18 @@ int main()
 		{
 			if (std::get<0>(item))
 			{
-				std::wcout << _T("Method : ") << std::get<1>(item) << std::endl;
+				std::wcout << "Method : "_nv << std::get<1>(item) << std::endl;
 			}
 			else
 			{
-				std::wcout << _T("Field : ") << std::get<1>(item) << _T(" (") << std::get<2>(item)->GetName() << _T(")") << std::endl;
+				std::wcout << "Field : "_nv << std::get<1>(item) << " ("_nv << std::get<2>(item)->GetName() << ")"_nv << std::endl;
 			}
 		}
 
-		std::wcout << std::boolalpha << type2->IsExtendFrom(type) << std::endl << type2->IsBoxed() << std::endl << (*type2->GetMemberFields().where([](auto&& pair) { return pair.first == _T("m_Test"); }).begin()).second->GetType()->IsBoxed() << std::endl;
+		std::wcout << std::boolalpha << type2->IsExtendFrom(type) << std::endl << type2->IsBoxed() << std::endl << (*type2->GetMemberFields().where([](auto&& pair) { return pair.first == "m_Test"_nv; }).begin()).second->GetType()->IsBoxed() << std::endl;
 
 		// Benchmark
-		/*auto Test = type2->GetMemberMethod(_T("Test"), {});
+		/*auto Test = type2->GetMemberMethod("Test"_nv, {});
 		ArgumentPack args{};
 
 		auto time = std::chrono::high_resolution_clock::now();
@@ -180,13 +180,13 @@ int main()
 	}
 	catch (ReflectionException& e)
 	{
-		std::wcerr << natUtil::FormatString(_T("Exception caught from {0}, file \"{1}\" line {2},\nDescription: {3}"), e.GetSource(), e.GetFile(), e.GetLine(), e.GetDesc()) << std::endl;
+		std::wcerr << natUtil::FormatString("Exception caught from {0}, file \"{1}\" line {2},\nDescription: {3}"_nv, e.GetSource(), e.GetFile(), e.GetLine(), e.GetDesc()) << std::endl;
 #ifdef EnableExceptionStackTrace
-		std::wcerr << _T("Call stack:") << std::endl;
+		std::wcerr << "Call stack:"_nv << std::endl;
 		for (size_t i = 0; i < e.GetStackWalker().GetFrameCount(); ++i)
 		{
 			auto&& symbol = e.GetStackWalker().GetSymbol(i);
-			std::wcerr << natUtil::FormatString(_T("{3}: (0x%p) {4} at address 0x%p (file {5}:{6} at address 0x%p)"), symbol.OriginalAddress, reinterpret_cast<const void*>(symbol.SymbolAddress), reinterpret_cast<const void*>(symbol.SourceFileAddress), i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine) << std::endl;
+			std::wcerr << natUtil::FormatString("{3}: (0x%p) {4} at address 0x%p (file {5}:{6} at address 0x%p)"_nv, symbol.OriginalAddress, reinterpret_cast<const void*>(symbol.SymbolAddress), reinterpret_cast<const void*>(symbol.SourceFileAddress), i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine) << std::endl;
 		}
 #endif
 	}

@@ -1,17 +1,20 @@
 #pragma once
 #include <natRefObj.h>
 #include <natException.h>
+#include <natConcepts.h>
+#include <natString.h>
 #include <unordered_map>
 #include <typeindex>
+
 #include "Type.h"
 #include "Attribute.h"
 
 using namespace NatsuLib;
 
 #define GENERATE_METADATA_IMPL(classname) private: typedef classname Self_t_;\
-public: static ncTStr GetName() noexcept\
+public: static nStrView GetName() noexcept\
 {\
-	return _T(#classname);\
+	return #classname##_nv;\
 }\
 natRefPointer<IType> GetType() const noexcept override\
 {\
@@ -27,25 +30,25 @@ private: static Reflection::ReflectionBaseClassesRegister<Self_t_, __VA_ARGS__> 
 #define GENERATE_METADATA_DEFINITION(classname, attributes) Reflection::ReflectionBaseClassesRegister<classname, Object> classname::_s_ReflectionHelper_##classname{ attributes }
 #define GENERATE_METADATA_DEFINITION_WITH_BASE_CLASSES(classname, attributes, ...) Reflection::ReflectionBaseClassesRegister<classname, __VA_ARGS__> classname::_s_ReflectionHelper_##classname{ attributes }
 
-#define DECLARE_REFLECTABLE_CLASS(classname) class classname : virtual public Object
+#define DECLARE_REFLECTABLE_CLASS(classname) class classname : public Object
 #define DECLARE_REFLECTABLE_CLASS_WITH_BASE_CLASS(classname, baseclass) class classname : public std::enable_if_t<std::is_base_of<Object, baseclass>::value, baseclass>
 #define DECLARE_REFLECTABLE_CLASS_WITH_BASE_CLASSES(classname, ...) struct classname : __VA_ARGS__
 
-#define DECLARE_REFLECTABLE_INTERFACE(classname) struct classname : virtual Object
+#define DECLARE_REFLECTABLE_INTERFACE(classname) struct classname : Object
 #define DECLARE_REFLECTABLE_INTERFACE_WITH_BASE_CLASS(classname, baseclass) struct classname : std::enable_if_t<std::is_base_of<Object, baseclass>::value, baseclass>
 #define DECLARE_REFLECTABLE_INTERFACE_WITH_BASE_CLASSES(classname, ...) struct classname : __VA_ARGS__
 
 #define DECLARE_NONMEMBER_METHOD(accessspecifier, classname, methodname, id, returntype, ...) private: static Reflection::ReflectionNonMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_NonMemberMethod_##methodname##_##id##_;\
 accessspecifier: static returntype methodname(__VA_ARGS__) 
 
-#define DEFINE_NONMEMBER_METHOD(accessspecifier, classname, methodname, id, returntype, ...) Reflection::ReflectionNonMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberMethod_##methodname##_##id##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, _T(#methodname), static_cast<returntype(*)(__VA_ARGS__)>(&classname::methodname) };\
+#define DEFINE_NONMEMBER_METHOD(accessspecifier, classname, methodname, id, returntype, ...) Reflection::ReflectionNonMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberMethod_##methodname##_##id##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, #methodname##_nv, static_cast<returntype(*)(__VA_ARGS__)>(&classname::methodname) };\
 returntype classname::methodname
 
 #define DECLARE_CONSTRUCTOR(accessspecifier, classname, specifiers, id, ...) private: static Reflection::ReflectionNonMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_NonMemberMethod_##Constructor##_##id##_;\
 static natRefPointer<Object> Constructor(rdetail_::forward_call_t, std::tuple<__VA_ARGS__>&&);\
 accessspecifier: specifiers classname(__VA_ARGS__)
 
-#define DEFINE_CONSTRUCTOR(accessspecifier, classname, specifiers, id, ...) Reflection::ReflectionNonMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberMethod_##Constructor##_##id##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, _T("Constructor"), static_cast<natRefPointer<Object>(*)(rdetail_::forward_call_t, std::tuple<__VA_ARGS__>&&)>(&classname::Constructor) };\
+#define DEFINE_CONSTRUCTOR(accessspecifier, classname, specifiers, id, ...) Reflection::ReflectionNonMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberMethod_##Constructor##_##id##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, "Constructor"_nv, static_cast<natRefPointer<Object>(*)(rdetail_::forward_call_t, std::tuple<__VA_ARGS__>&&)>(&classname::Constructor) };\
 natRefPointer<Object> classname::Constructor(rdetail_::forward_call_t, std::tuple<__VA_ARGS__>&& args)\
 {\
 	return ::CommonConstructor<classname>(std::move(args), typename std::make_index_sequence<std::tuple_size<std::remove_reference_t<decltype(args)>>::value>::type{});\
@@ -53,14 +56,14 @@ natRefPointer<Object> classname::Constructor(rdetail_::forward_call_t, std::tupl
 classname::classname
 
 #define DECLARE_DEFAULT_COPYCONSTRUCTOR(accessspecifier, classname) DECLARE_CONSTRUCTOR(accessspecifier, classname, , CopyConstructor, classname const&) = default
-#define DEFINE_DEFAULT_COPYCONSTRUCTOR(accessspecifier, classname) Reflection::ReflectionNonMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberMethod_##Constructor##_CopyConstructor##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, _T("Constructor"), static_cast<natRefPointer<Object>(*)(rdetail_::forward_call_t, std::tuple<classname const&>&&)>(&classname::Constructor) };\
+#define DEFINE_DEFAULT_COPYCONSTRUCTOR(accessspecifier, classname) Reflection::ReflectionNonMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberMethod_##Constructor##_CopyConstructor##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, "Constructor"_nv, static_cast<natRefPointer<Object>(*)(rdetail_::forward_call_t, std::tuple<classname const&>&&)>(&classname::Constructor) };\
 natRefPointer<Object> classname::Constructor(rdetail_::forward_call_t, std::tuple<classname const&>&& args)\
 {\
 	return ::CommonConstructor<classname>(std::move(args), typename std::make_index_sequence<std::tuple_size<std::remove_reference_t<decltype(args)>>::value>::type{});\
 }
 
 #define DECLARE_DEFAULT_MOVECONSTRUCTOR(accessspecifier, classname) DECLARE_CONSTRUCTOR(accessspecifier, classname, , MoveConstructor, classname &&) = default
-#define DEFINE_DEFAULT_MOVECONSTRUCTOR(accessspecifier, classname) Reflection::ReflectionNonMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberMethod_##Constructor##_MoveConstructor##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, _T("Constructor"), static_cast<natRefPointer<Object>(*)(rdetail_::forward_call_t, std::tuple<classname &&>&&)>(&classname::Constructor) };\
+#define DEFINE_DEFAULT_MOVECONSTRUCTOR(accessspecifier, classname) Reflection::ReflectionNonMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberMethod_##Constructor##_MoveConstructor##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, "Constructor"_nv, static_cast<natRefPointer<Object>(*)(rdetail_::forward_call_t, std::tuple<classname &&>&&)>(&classname::Constructor) };\
 natRefPointer<Object> classname::Constructor(rdetail_::forward_call_t, std::tuple<classname &&>&& args)\
 {\
 	return ::CommonConstructor<classname>(std::move(args), typename std::make_index_sequence<std::tuple_size<std::remove_reference_t<decltype(args)>>::value>::type{});\
@@ -69,13 +72,13 @@ natRefPointer<Object> classname::Constructor(rdetail_::forward_call_t, std::tupl
 #define DECLARE_MEMBER_METHOD(accessspecifier, classname, specifiers, methodname, id, returntype, ...) private: static Reflection::ReflectionMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_MemberMethod_##methodname##_##id##_;\
 accessspecifier: specifiers returntype methodname(__VA_ARGS__)
 
-#define DEFINE_MEMBER_METHOD(accessspecifier, classname, specifiers, methodname, id, returntype, ...) Reflection::ReflectionMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_MemberMethod_##methodname##_##id##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, false, _T(#methodname), static_cast<returntype(classname::*)(__VA_ARGS__)>(&classname::methodname) };\
+#define DEFINE_MEMBER_METHOD(accessspecifier, classname, specifiers, methodname, id, returntype, ...) Reflection::ReflectionMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_MemberMethod_##methodname##_##id##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, false, #methodname##_nv, static_cast<returntype(classname::*)(__VA_ARGS__)>(&classname::methodname) };\
 returntype classname::methodname
 
 #define DECLARE_CONST_MEMBER_METHOD(accessspecifier, classname, specifiers, methodname, id, returntype, ...) private: static Reflection::ReflectionMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_Const_MemberMethod_##methodname##_##id##_;\
 accessspecifier: specifiers returntype methodname(__VA_ARGS__) const
 
-#define DEFINE_CONST_MEMBER_METHOD(accessspecifier, classname, specifiers, methodname, id, returntype, ...) Reflection::ReflectionMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_Const_MemberMethod_##methodname##_##id##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, false, _T(#methodname), static_cast<returntype(classname::*)(__VA_ARGS__) const>(&classname::methodname) };\
+#define DEFINE_CONST_MEMBER_METHOD(accessspecifier, classname, specifiers, methodname, id, returntype, ...) Reflection::ReflectionMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_Const_MemberMethod_##methodname##_##id##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, false, #methodname##_nv, static_cast<returntype(classname::*)(__VA_ARGS__) const>(&classname::methodname) };\
 returntype classname::methodname
 
 #define DECLARE_VIRTUAL_MEMBER_METHOD(accessspecifier, classname, specifiers, methodname, id, returntype, ...) private: static Reflection::ReflectionMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_Virtual_MemberMethod_##methodname##_##id##_;\
@@ -87,7 +90,7 @@ specifiers returntype methodname##_forwarder_impl_(std::tuple<Args...>&& argTupl
 }\
 accessspecifier: virtual specifiers returntype methodname(__VA_ARGS__)
 
-#define DEFINE_VIRTUAL_MEMBER_METHOD(accessspecifier, classname, specifiers, methodname, id, returntype, ...) Reflection::ReflectionMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_Virtual_MemberMethod_##methodname##_##id##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, true, _T(#methodname), static_cast<returntype(classname::*)(rdetail_::forward_call_t, std::tuple<__VA_ARGS__>&&)>(&classname::methodname##_forwarder_) };\
+#define DEFINE_VIRTUAL_MEMBER_METHOD(accessspecifier, classname, specifiers, methodname, id, returntype, ...) Reflection::ReflectionMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_Virtual_MemberMethod_##methodname##_##id##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, true, #methodname##_nv, static_cast<returntype(classname::*)(rdetail_::forward_call_t, std::tuple<__VA_ARGS__>&&)>(&classname::methodname##_forwarder_) };\
 specifiers returntype classname::methodname##_forwarder_(rdetail_::forward_call_t, std::tuple<__VA_ARGS__>&& argTuple)\
 {\
 	return methodname##_forwarder_impl_(std::move(argTuple), typename std::make_index_sequence<std::tuple_size<std::remove_reference_t<decltype(argTuple)>>::value>::type{});\
@@ -103,7 +106,7 @@ specifiers returntype methodname##_forwarder_impl_(std::tuple<Args...>&& argTupl
 }\
 accessspecifier: virtual specifiers returntype methodname(__VA_ARGS__) = 0
 
-#define DEFINE_PURE_VIRTUAL_MEMBER_METHOD(accessspecifier, classname, specifiers, methodname, id, returntype, ...) Reflection::ReflectionMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_PureVirtual_MemberMethod_##methodname##_##id##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, true, _T(#methodname), static_cast<returntype(classname::*)(rdetail_::forward_call_t, std::tuple<__VA_ARGS__>&&)>(&classname::methodname##_forwarder_) };\
+#define DEFINE_PURE_VIRTUAL_MEMBER_METHOD(accessspecifier, classname, specifiers, methodname, id, returntype, ...) Reflection::ReflectionMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_PureVirtual_MemberMethod_##methodname##_##id##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, true, #methodname##_nv, static_cast<returntype(classname::*)(rdetail_::forward_call_t, std::tuple<__VA_ARGS__>&&)>(&classname::methodname##_forwarder_) };\
 specifiers returntype classname::methodname##_forwarder_(rdetail_::forward_call_t, std::tuple<__VA_ARGS__>&& argTuple)\
 {\
 	return methodname##_forwarder_impl_(std::move(argTuple), typename std::make_index_sequence<std::tuple_size<std::remove_reference_t<decltype(argTuple)>>::value>::type{});\
@@ -118,7 +121,7 @@ specifiers returntype methodname##_forwarder_impl_(std::tuple<Args...>&& argTupl
 }\
 accessspecifier: virtual specifiers returntype methodname(__VA_ARGS__) const
 
-#define DEFINE_VIRTUAL_CONST_MEMBER_METHOD(accessspecifier, classname, specifiers, methodname, id, returntype, ...) Reflection::ReflectionMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_Virtual_Const_MemberMethod_##methodname##_##id##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, true, _T(#methodname), static_cast<returntype(classname::*)(rdetail_::forward_call_t, std::tuple<__VA_ARGS__>&&) const>(&classname::methodname##_forwarder_) };\
+#define DEFINE_VIRTUAL_CONST_MEMBER_METHOD(accessspecifier, classname, specifiers, methodname, id, returntype, ...) Reflection::ReflectionMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_Virtual_Const_MemberMethod_##methodname##_##id##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, true, #methodname##_nv, static_cast<returntype(classname::*)(rdetail_::forward_call_t, std::tuple<__VA_ARGS__>&&) const>(&classname::methodname##_forwarder_) };\
 specifiers returntype classname::methodname##_forwarder_(rdetail_::forward_call_t, std::tuple<__VA_ARGS__>&& argTuple) const\
 {\
 	return methodname##_forwarder_impl_(std::move(argTuple), typename std::make_index_sequence<std::tuple_size<std::remove_reference_t<decltype(argTuple)>>::value>::type{});\
@@ -134,7 +137,7 @@ specifiers returntype methodname##_forwarder_impl_(std::tuple<Args...>&& argTupl
 }\
 accessspecifier: virtual specifiers returntype methodname(__VA_ARGS__) const = 0
 
-#define DEFINE_PURE_VIRTUAL_CONST_MEMBER_METHOD(accessspecifier, classname, specifiers, methodname, id, returntype, ...) Reflection::ReflectionMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_PureVirtual_Const_MemberMethod_##methodname##_##id##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, true, _T(#methodname), static_cast<returntype(classname::*)(rdetail_::forward_call_t, std::tuple<__VA_ARGS__>&&)>(&classname::methodname##_forwarder_) };\
+#define DEFINE_PURE_VIRTUAL_CONST_MEMBER_METHOD(accessspecifier, classname, specifiers, methodname, id, returntype, ...) Reflection::ReflectionMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_PureVirtual_Const_MemberMethod_##methodname##_##id##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, true, #methodname##_nv, static_cast<returntype(classname::*)(rdetail_::forward_call_t, std::tuple<__VA_ARGS__>&&)>(&classname::methodname##_forwarder_) };\
 specifiers returntype classname::methodname##_forwarder_(rdetail_::forward_call_t, std::tuple<__VA_ARGS__>&& argTuple)\
 {\
 	return methodname##_forwarder_impl_(std::move(argTuple), typename std::make_index_sequence<std::tuple_size<std::remove_reference_t<decltype(argTuple)>>::value>::type{});\
@@ -155,30 +158,30 @@ classname::operator targettype() const
 #define DECLARE_NONMEMBER_FIELD(accessspecifier, classname, fieldtype, fieldname) private: static Reflection::ReflectionNonMemberFieldRegister<classname> _s_ReflectionHelper_##classname##_NonMemberField_##fieldname##_;\
 accessspecifier: static fieldtype fieldname
 
-#define DEFINE_NONMEMBER_FIELD(accessspecifier, classname, fieldtype, fieldname) Reflection::ReflectionNonMemberFieldRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberField_##fieldname##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, _T(#fieldname), &classname::fieldname };\
+#define DEFINE_NONMEMBER_FIELD(accessspecifier, classname, fieldtype, fieldname) Reflection::ReflectionNonMemberFieldRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberField_##fieldname##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, #fieldname##_nv, &classname::fieldname };\
 fieldtype classname::fieldname
 
 #define DECLARE_NONMEMBER_POINTER_FIELD(accessspecifier, classname, pointertotype, fieldname) private: static Reflection::ReflectionNonMemberFieldRegister<classname> _s_ReflectionHelper_##classname##_NonMemberPointerField_##fieldname##_;\
 accessspecifier: static natRefPointer<pointertotype> fieldname
 
-#define DEFINE_NONMEMBER_POINTER_FIELD(accessspecifier, classname, pointertotype, fieldname) Reflection::ReflectionNonMemberFieldRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberPointerField_##fieldname##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, _T(#fieldname), &classname::fieldname };\
+#define DEFINE_NONMEMBER_POINTER_FIELD(accessspecifier, classname, pointertotype, fieldname) Reflection::ReflectionNonMemberFieldRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberPointerField_##fieldname##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, #fieldname##_nv, &classname::fieldname };\
 natRefPointer<pointertotype> classname::fieldname
 
 #define DECLARE_MEMBER_FIELD(accessspecifier, classname, fieldtype, fieldname) private: static Reflection::ReflectionMemberFieldRegister<classname> _s_ReflectionHelper_##classname##_MemberField_##fieldname##_;\
 accessspecifier: fieldtype fieldname
 
-#define DEFINE_MEMBER_FIELD(accessspecifier, classname, fieldtype, fieldname) Reflection::ReflectionMemberFieldRegister<classname> classname::_s_ReflectionHelper_##classname##_MemberField_##fieldname##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, _T(#fieldname), &classname::fieldname }
+#define DEFINE_MEMBER_FIELD(accessspecifier, classname, fieldtype, fieldname) Reflection::ReflectionMemberFieldRegister<classname> classname::_s_ReflectionHelper_##classname##_MemberField_##fieldname##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, #fieldname##_nv, &classname::fieldname }
 
 #define DECLARE_MEMBER_POINTER_FIELD(accessspecifier, classname, pointertotype, fieldname) private: static Reflection::ReflectionMemberFieldRegister<classname> _s_ReflectionHelper_##classname##_MemberPointerField_##fieldname##_;\
 accessspecifier: natRefPointer<pointertotype> fieldname
 
-#define DEFINE_MEMBER_POINTER_FIELD(accessspecifier, classname, pointertotype, fieldname) Reflection::ReflectionMemberFieldRegister<classname> classname::_s_ReflectionHelper_##classname##_MemberPointerField_##fieldname##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, _T(#fieldname), &classname::fieldname }
+#define DEFINE_MEMBER_POINTER_FIELD(accessspecifier, classname, pointertotype, fieldname) Reflection::ReflectionMemberFieldRegister<classname> classname::_s_ReflectionHelper_##classname##_MemberPointerField_##fieldname##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, #fieldname##_nv, &classname::fieldname }
 
 #define typeof(type) Reflection::GetInstance().GetType<type>()
 #define typeofexp(expression) Reflection::GetInstance().GetType<decltype(expression)>()
 #define typeofname(name) Reflection::GetInstance().GetType(name)
 
-#define nameof_(name) _T(#name)
+#define nameof_(name) #name##_nv
 #define nameof(name) ((static_cast<void>(name), nameof_(name)))
 
 namespace rdetail_
@@ -228,7 +231,7 @@ public:
 	struct ReflectionNonMemberMethodRegister
 	{
 		template <typename Func>
-		ReflectionNonMemberMethodRegister(AccessSpecifier accessSpecifier, ncTStr name, Func method)
+		ReflectionNonMemberMethodRegister(AccessSpecifier accessSpecifier, nStrView name, Func method)
 		{
 			GetInstance().RegisterNonMemberMethod<T>(accessSpecifier, name, method);
 		}
@@ -238,7 +241,7 @@ public:
 	struct ReflectionMemberMethodRegister
 	{
 		template <typename Func>
-		ReflectionMemberMethodRegister(AccessSpecifier accessSpecifier, bool isVirtual, ncTStr name, Func method)
+		ReflectionMemberMethodRegister(AccessSpecifier accessSpecifier, bool isVirtual, nStrView name, Func method)
 		{
 			GetInstance().RegisterMemberMethod<T>(accessSpecifier, isVirtual, name, method);
 		}
@@ -248,7 +251,7 @@ public:
 	struct ReflectionNonMemberFieldRegister
 	{
 		template <typename U>
-		ReflectionNonMemberFieldRegister(AccessSpecifier accessSpecifier, ncTStr name, U field)
+		ReflectionNonMemberFieldRegister(AccessSpecifier accessSpecifier, nStrView name, U field)
 		{
 			GetInstance().RegisterNonMemberField<T>(accessSpecifier, name, field);
 		}
@@ -258,7 +261,7 @@ public:
 	struct ReflectionMemberFieldRegister
 	{
 		template <typename U>
-		ReflectionMemberFieldRegister(AccessSpecifier accessSpecifier, ncTStr name, U field)
+		ReflectionMemberFieldRegister(AccessSpecifier accessSpecifier, nStrView name, U field)
 		{
 			GetInstance().RegisterMemberField<T>(accessSpecifier, name, field);
 		}
@@ -292,21 +295,21 @@ public:
 	}
 
 	template <typename Class, typename Func>
-	void RegisterNonMemberMethod(AccessSpecifier accessSpecifier, ncTStr name, Func method);
+	void RegisterNonMemberMethod(AccessSpecifier accessSpecifier, nStrView name, Func method);
 
 	template <typename Class, typename Func>
-	void RegisterMemberMethod(AccessSpecifier accessSpecifier, bool isVirtual, ncTStr name, Func method);
+	void RegisterMemberMethod(AccessSpecifier accessSpecifier, bool isVirtual, nStrView name, Func method);
 
 	template <typename Class, typename Field>
-	void RegisterNonMemberField(AccessSpecifier accessSpecifier, ncTStr name, Field field);
+	void RegisterNonMemberField(AccessSpecifier accessSpecifier, nStrView name, Field field);
 
 	template <typename Class, typename Field>
-	void RegisterMemberField(AccessSpecifier accessSpecifier, ncTStr name, Field field);
+	void RegisterMemberField(AccessSpecifier accessSpecifier, nStrView name, Field field);
 
 	template <typename Class>
 	natRefPointer<IType> GetType();
 
-	natRefPointer<IType> GetType(ncTStr typeName);
+	natRefPointer<IType> GetType(nStrView typeName);
 
 	Linq<const natRefPointer<IType>> GetTypes() const;
 
@@ -317,10 +320,30 @@ private:
 	std::unordered_map<std::type_index, natRefPointer<IType>> m_TypeTable;
 };
 
+namespace rdetail_
+{
+	template <typename T, typename Test = void>
+	struct RegisterHelper
+	{
+		static void Do()
+		{
+		}
+	};
+
+	template <typename T>
+	struct RegisterHelper<T, std::void_t<std::enable_if_t<std::is_base_of<Object, T>::value>>>
+	{
+		static void Do()
+		{
+			Reflection::GetInstance().RegisterType<T>();
+		}
+	};
+}
+
 template <typename T, typename ... Rest>
 void rdetail_::ExplicitRegisterClass<T, Rest...>::Execute()
 {
-	Reflection::GetInstance().RegisterType<T>();
+	RegisterHelper<T>::Do();
 	ExplicitRegisterClass<Rest...>::Execute();
 }
 
@@ -333,7 +356,7 @@ class BoxedObject final
 public:
 	[[noreturn]] T& GetObj()
 	{
-		nat_Throw(ReflectionException, _T("Cannot get object."));
+		nat_Throw(ReflectionException, "Cannot get object."_nv);
 	}
 };
 
@@ -346,13 +369,13 @@ static natRefPointer<Object> Constructor(type value) { return make_ref<BoxedObje
 #pragma warning (disable : 4800)
 
 template <typename T>
-class BoxedObject<T, std::void_t<std::enable_if_t<std::is_arithmetic<T>::value>>> final
+class BoxedObject<T, std::void_t<std::enable_if_t<std::disjunction<std::is_arithmetic<T>>::value>>> final
 	: public Object
 {
 public:
 	typedef BoxedObject Self_t_;
 	typedef T UnderlyingType;
-	static ncTStr GetName() noexcept;
+	static nStrView GetName() noexcept;
 	natRefPointer<IType> GetType() const noexcept override
 	{
 		return typeof(Self_t_);
@@ -397,7 +420,7 @@ public:
 		return m_Obj;
 	}
 
-	nTString ToString() const noexcept override
+	nString ToString() const noexcept override
 	{
 		return _toString(this);
 	}
@@ -408,7 +431,7 @@ public:
 	}
 
 private:
-	static nTString _toString(const BoxedObject* pThis) noexcept;
+	static nString _toString(const BoxedObject* pThis) noexcept;
 
 	T m_Obj;
 };
@@ -416,20 +439,79 @@ private:
 #pragma warning (pop)
 
 template <>
+class BoxedObject<nString> final
+	: public Object
+{
+public:
+	typedef BoxedObject Self_t_;
+	typedef nString UnderlyingType;
+
+	static nStrView GetName() noexcept
+	{
+		return "RefString"_nv;
+	}
+
+	natRefPointer<IType> GetType() const noexcept override
+	{
+		return typeof(BoxedObject<nString>);
+	}
+
+	BoxedObject()
+		: m_Obj{}
+	{
+	}
+
+	INITIALIZEBOXEDOBJECT(nString, RefString);
+
+	operator nString() const noexcept
+	{
+		return m_Obj;
+	}
+
+	operator nString&() noexcept
+	{
+		return m_Obj;
+	}
+
+	operator nString const&() const noexcept
+	{
+		return m_Obj;
+	}
+
+	nString& GetObj() noexcept
+	{
+		return m_Obj;
+	}
+
+	nString ToString() const noexcept override
+	{
+		return m_Obj;
+	}
+
+	std::type_index GetUnboxedType() override
+	{
+		return typeid(nString);
+	}
+
+private:
+	nString m_Obj;
+};
+
+template <>
 class BoxedObject<void> final
 	: public Object
 {
 public:
 	typedef BoxedObject<void> Self_t_;
-	static ncTStr GetName() noexcept;
+	static nStrView GetName() noexcept;
 	natRefPointer<IType> GetType() const noexcept override
 	{
 		return Reflection::GetInstance().GetType<Self_t_>();
 	}
 
-	nTString ToString() const noexcept override
+	nString ToString() const noexcept override
 	{
-		return _T("void");
+		return "void"_nv;
 	}
 
 	std::type_index GetUnboxedType() override
@@ -439,9 +521,35 @@ public:
 
 	[[noreturn]] void GetObj()
 	{
-		nat_Throw(ReflectionException, _T("Cannot get object."));
+		nat_Throw(ReflectionException, "Cannot get object."_nv);
 	}
 };
+
+#undef INITIALIZEBOXEDOBJECT
+#define INITIALIZEBOXEDOBJECT(type, alias) template <> inline nStrView BoxedObject<type>::GetName() noexcept\
+{\
+	/*return "BoxedObject<"## #type ##">"_nv;*/\
+	return #alias##_nv;\
+}
+
+INITIALIZEBOXEDOBJECT(bool, Bool);
+INITIALIZEBOXEDOBJECT(char, Char);
+INITIALIZEBOXEDOBJECT(wchar_t, WChar);
+INITIALIZEBOXEDOBJECT(int8_t, SByte);
+INITIALIZEBOXEDOBJECT(uint8_t, Byte);
+INITIALIZEBOXEDOBJECT(int16_t, Short);
+INITIALIZEBOXEDOBJECT(uint16_t, UShort);
+INITIALIZEBOXEDOBJECT(int32_t, Integer);
+INITIALIZEBOXEDOBJECT(uint32_t, UInteger);
+INITIALIZEBOXEDOBJECT(int64_t, Long);
+INITIALIZEBOXEDOBJECT(uint64_t, ULong);
+INITIALIZEBOXEDOBJECT(float, Float);
+INITIALIZEBOXEDOBJECT(double, Double);
+
+inline nStrView BoxedObject<void>::GetName() noexcept
+{
+	return "Void"_nv;
+}
 
 template <typename T>
 std::enable_if_t<std::is_base_of<Object, T>::value, bool> operator==(natRefPointer<T> const& ptr, nullptr_t)
@@ -477,10 +585,11 @@ INITIALIZEBOXEDOBJECT(int64_t, Long);
 INITIALIZEBOXEDOBJECT(uint64_t, ULong);
 INITIALIZEBOXEDOBJECT(float, Float);
 INITIALIZEBOXEDOBJECT(double, Double);
+INITIALIZEBOXEDOBJECT(nString, RefString);
 INITIALIZEBOXEDOBJECT(void, Void);
 
 template <typename T>
-std::enable_if_t<std::is_arithmetic<T>::value, natRefPointer<Object>> Object::Box(T obj)
+std::enable_if_t<std::disjunction<std::is_arithmetic<T>, std::is_same<T, nString>>::value, natRefPointer<Object>> Object::Box(T obj)
 {
 	return make_ref<BoxedObject<T>>(obj);
 }
@@ -501,7 +610,7 @@ namespace rdetail_
 
 	template <typename T>
 	struct boxed_type_impl
-		: boxed_type_impl_<T, std::disjunction<std::is_arithmetic<T>, std::is_void<T>>::value>
+		: boxed_type_impl_<T, std::disjunction<std::is_arithmetic<T>, std::is_same<T, nString>, std::is_void<T>>::value>
 	{
 	};
 
@@ -546,7 +655,7 @@ T& Object::Unbox()
 	auto typeindex = type->GetTypeIndex();
 	if (typeindex == typeid(BoxedObject<void>))
 	{
-		nat_Throw(ReflectionException, _T("Cannot unbox a void object."));
+		nat_Throw(ReflectionException, "Cannot unbox a void object."_nv);
 	}
 	if (typeindex == typeid(T))
 	{
@@ -556,7 +665,7 @@ T& Object::Unbox()
 			return *pRet;
 		}
 
-		nat_Throw(ReflectionException, _T("Type wrong."));
+		nat_Throw(ReflectionException, "Type wrong."_nv);
 	}
 	if (typeindex == typeid(BoxedObject<T>))
 	{
@@ -573,7 +682,7 @@ T& Object::Unbox()
 		}
 	}
 
-	nat_Throw(ReflectionException, _T("Type wrong."));
+	nat_Throw(ReflectionException, "Type wrong."_nv);
 }
 
 template <typename Class>
@@ -585,7 +694,7 @@ natRefPointer<IType> Reflection::GetType()
 		return iter->second;
 	}
 
-	nat_Throw(ReflectionException, _T("Type not found."));
+	nat_Throw(ReflectionException, "Type not found."_nv);
 }
 
 #include "Field.h"
@@ -597,13 +706,13 @@ natRefPointer<IType> MemberField<T(Class::*)>::GetType()
 }
 
 template <typename Class, typename Field>
-void Reflection::RegisterNonMemberField(AccessSpecifier accessSpecifier, ncTStr name, Field field)
+void Reflection::RegisterNonMemberField(AccessSpecifier accessSpecifier, nStrView name, Field field)
 {
 	GetType<Class>()->RegisterNonMemberField(name, make_ref<NonMemberField<Field>>(accessSpecifier, field));
 }
 
 template <typename Class, typename Field>
-void Reflection::RegisterMemberField(AccessSpecifier accessSpecifier, ncTStr name, Field field)
+void Reflection::RegisterMemberField(AccessSpecifier accessSpecifier, nStrView name, Field field)
 {
 	GetType<Class>()->RegisterMemberField(name, make_ref<MemberField<Field>>(accessSpecifier, field));
 }
@@ -611,13 +720,13 @@ void Reflection::RegisterMemberField(AccessSpecifier accessSpecifier, ncTStr nam
 #include "Method.h"
 
 template <typename Class, typename Func>
-void Reflection::RegisterNonMemberMethod(AccessSpecifier accessSpecifier, ncTStr name, Func method)
+void Reflection::RegisterNonMemberMethod(AccessSpecifier accessSpecifier, nStrView name, Func method)
 {
 	GetType<Class>()->RegisterNonMemberMethod(name, make_ref<NonMemberMethod<Func>>(accessSpecifier, method));
 }
 
 template <typename Class, typename Func>
-void Reflection::RegisterMemberMethod(AccessSpecifier accessSpecifier, bool isVirtual, ncTStr name, Func method)
+void Reflection::RegisterMemberMethod(AccessSpecifier accessSpecifier, bool isVirtual, nStrView name, Func method)
 {
 	GetType<Class>()->RegisterMemberMethod(name, make_ref<MemberMethod<Func>>(accessSpecifier, isVirtual, method));
 }

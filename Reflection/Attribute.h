@@ -8,9 +8,9 @@
 struct IAttribute
 	: virtual Object
 {
-	static ncTStr GetName() noexcept
+	static nStrView GetName() noexcept
 	{
-		return _T("IAttribute");
+		return "IAttribute"_nv;
 	}
 
 	natRefPointer<IType> GetType() const noexcept override;
@@ -52,9 +52,9 @@ public:
 	{
 	}
 
-	static ncTStr GetName() noexcept
+	static nStrView GetName() noexcept
 	{
-		return _T("AttributeUsage");
+		return "AttributeUsage"_nv;
 	}
 
 	natRefPointer<IType> GetType() const noexcept override;

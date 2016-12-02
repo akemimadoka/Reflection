@@ -419,7 +419,7 @@ public:
 	{
 		if (object.Get() == nullptr)
 		{
-			nat_Throw(NullPointerException, _T("Object is nullptr."));
+			nat_Throw(NullPointerException, "Object is nullptr."_nv);
 		}
 
 		return MethodHelper<MethodType>::Invoke(object, m_Func, pack);
@@ -550,4 +550,3 @@ private:
 	MethodType m_Func;
 	std::vector<natRefPointer<IType>> m_Types;
 };
-

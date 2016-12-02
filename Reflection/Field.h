@@ -29,7 +29,7 @@ namespace rdetail_
 				if (!tmp)
 				{
 					tmp = Convert::ConvertTo<std::remove_cv_t<std::remove_reference_t<T>>>(pObj);
-					//nat_Throw(ReflectionException, _T("pObj cannot assign to val."));
+					//nat_Throw(ReflectionException, "pObj cannot assign to val."_nv);
 				}
 				
 				val = std::move(tmp);
