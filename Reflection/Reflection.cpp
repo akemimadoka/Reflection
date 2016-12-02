@@ -43,6 +43,25 @@ natRefPointer<IType> AttributeUsage::GetType() const noexcept
 }
 
 #undef INITIALIZEBOXEDOBJECT
+#define INITIALIZEBOXEDOBJECT(type, alias) template class BoxedObject<type>
+
+INITIALIZEBOXEDOBJECT(bool, Bool);
+INITIALIZEBOXEDOBJECT(char, Char);
+INITIALIZEBOXEDOBJECT(wchar_t, WChar);
+INITIALIZEBOXEDOBJECT(int8_t, SByte);
+INITIALIZEBOXEDOBJECT(uint8_t, Byte);
+INITIALIZEBOXEDOBJECT(int16_t, Short);
+INITIALIZEBOXEDOBJECT(uint16_t, UShort);
+INITIALIZEBOXEDOBJECT(int32_t, Integer);
+INITIALIZEBOXEDOBJECT(uint32_t, UInteger);
+INITIALIZEBOXEDOBJECT(int64_t, Long);
+INITIALIZEBOXEDOBJECT(uint64_t, ULong);
+INITIALIZEBOXEDOBJECT(float, Float);
+INITIALIZEBOXEDOBJECT(double, Double);
+INITIALIZEBOXEDOBJECT(nString, RefString);
+INITIALIZEBOXEDOBJECT(void, Void);
+
+#undef INITIALIZEBOXEDOBJECT
 #define INITIALIZEBOXEDOBJECT(type, alias) template <> Reflection::ReflectionNonMemberMethodRegister<INITIALIZEBOXEDOBJECTFOR> INITIALIZEBOXEDOBJECTFOR::s_BoxedObject_Constructor_##type##_ = { AccessSpecifier::AccessSpecifier_public, "Constructor"_nv, static_cast<natRefPointer<Object>(*)(type)>(&INITIALIZEBOXEDOBJECTFOR::Constructor) }
 
 #undef INITIALIZEBOXEDOBJECTFOR

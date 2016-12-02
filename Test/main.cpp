@@ -160,6 +160,8 @@ int main()
 
 		std::wcout << std::boolalpha << type2->IsExtendFrom(type) << std::endl << type2->IsBoxed() << std::endl << (*type2->GetMemberFields().where([](auto&& pair) { return pair.first == "m_Test"_nv; }).begin()).second->GetType()->IsBoxed() << std::endl;
 
+		std::wcout << typeof(RefString)->Construct({ "Test!"_nv })->ToString() << std::endl;
+
 		// Benchmark
 		/*auto Test = type2->GetMemberMethod("Test"_nv, {});
 		ArgumentPack args{};

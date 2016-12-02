@@ -27,13 +27,19 @@ struct Object
 	template <typename T>
 	static std::enable_if_t<std::is_base_of<Object, T>::value, natRefPointer<Object>> Box(T&& obj)
 	{
-		return make_ref<T>(std::forward<T>(obj));
+		return make_ref<T>(std::move(obj));
 	}
 
 	template <typename T>
 	static natRefPointer<Object> Box(natRefPointer<T> const& ptr)
 	{
 		return ptr;
+	}
+
+	// ¿ª¶´×¢Òâ
+	static natRefPointer<Object> Box(nStrView const& view)
+	{
+		return Box(nString{ view });
 	}
 
 	template <typename T>
