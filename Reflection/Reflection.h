@@ -350,6 +350,21 @@ void rdetail_::ExplicitRegisterClass<T, Rest...>::Execute()
 #include "Object.h"
 
 template <typename T, typename Test = void>
+struct should_box
+	: std::false_type
+{
+};
+
+template <typename T>
+struct should_box<T, std::void_t<std::enable_if_t<!std::is_base_of<Object, T>::value>>>
+	: std::true_type
+{
+};
+
+// 若需要将并非派生于Object的类型作为可反射对象使用（例如函数的参数或返回值等），需要在此对BoxedObject特化此类型
+// 注意你仍然需要手动或者利用宏来注册
+// BoxedObject必须继承于Object且GetObj方法返回第一个模板参数的类型的左值引用
+template <typename T, typename Test = void>
 class BoxedObject final
 	: public Object
 {
@@ -608,9 +623,15 @@ INITIALIZEBOXEDOBJECT(nString, RefString);
 INITIALIZEBOXEDOBJECT(void, Void);
 
 template <typename T>
-std::enable_if_t<std::disjunction<std::is_arithmetic<T>, std::is_same<T, nString>>::value, natRefPointer<Object>> Object::Box(T obj)
+std::enable_if_t<!std::is_base_of<Object, T>::value, natRefPointer<Object>> Object::Box(natRefPointer<T> const& ptr)
 {
-	return make_ref<BoxedObject<T>>(obj);
+	return make_ref<BoxedObject<T>>(ptr);
+}
+
+template <typename T>
+std::enable_if_t<!std::is_base_of<Object, T>::value, natRefPointer<Object>> Object::Box(T obj)
+{
+	return make_ref<BoxedObject<T>>(std::move(obj));
 }
 
 namespace rdetail_
@@ -629,7 +650,7 @@ namespace rdetail_
 
 	template <typename T>
 	struct boxed_type_impl
-		: boxed_type_impl_<T, std::disjunction<std::is_arithmetic<T>, std::is_same<T, nString>, std::is_void<T>>::value>
+		: boxed_type_impl_<T, should_box<T>::value>
 	{
 	};
 
@@ -642,7 +663,7 @@ namespace rdetail_
 
 template <typename T>
 struct boxed_type
-	: ::rdetail_::boxed_type_impl<std::remove_cv_t<std::remove_reference_t<T>>>
+	: rdetail_::boxed_type_impl<std::remove_cv_t<std::remove_reference_t<T>>>
 {
 };
 
@@ -715,6 +736,52 @@ natRefPointer<IType> Reflection::GetType()
 
 	nat_Throw(ReflectionException, "Type not found."_nv);
 }
+
+// 要求这个类型可以被实例化以及移动构造，如果你的类型不符合这个要求，你需要自行特化
+#define REGISTER_BOXED_OBJECT(type) template <>\
+class BoxedObject<type> final : public Object\
+{\
+public:\
+	static nStrView GetName() noexcept { return #type##_nv; }\
+	natRefPointer<IType> GetType() const noexcept override { return typeof(BoxedObject); }\
+	std::type_index GetUnboxedType() override { return typeid(type); }\
+	BoxedObject(type&& value) : m_Obj(std::move(value)) {}\
+	operator type&() { return m_Obj; }\
+	type& GetObj() noexcept { return m_Obj; }\
+private:\
+	static Reflection::ReflectionBaseClassesRegister<BoxedObject, Object> _s_ReflectionHelper_BoxedObject;\
+	static Reflection::ReflectionNonMemberMethodRegister<BoxedObject> _s_ReflectionHelper_BoxedObject_Constructor;\
+	static natRefPointer<Object> Constructor(type&& value) { return make_ref<BoxedObject<type>>(std::move(value)); }\
+	type m_Obj;\
+}
+
+#define REGISTER_BOXED_OBJECT_DEF(type) Reflection::ReflectionBaseClassesRegister<BoxedObject<type>, Object> BoxedObject<type>::_s_ReflectionHelper_BoxedObject { WITH() };\
+Reflection::ReflectionNonMemberMethodRegister<BoxedObject<type>> BoxedObject<type>::_s_ReflectionHelper_BoxedObject_Constructor { AccessSpecifier::AccessSpecifier_public, "Constructor"_nv, static_cast<natRefPointer<Object>(*)(type&&)>(&BoxedObject<type>::Constructor) }
+
+#define REGISTER_BOXED_REFOBJECT(type) template <>\
+class BoxedObject<type> final : public Object\
+{\
+public:\
+	static nStrView GetName() noexcept { return #type##_nv; }\
+	natRefPointer<IType> GetType() const noexcept override { return typeof(BoxedObject); }\
+	std::type_index GetUnboxedType() override { return typeid(type); }\
+	BoxedObject(natRefPointer<type> value) : m_Obj(std::move(value)) {}\
+	BoxedObject(BoxedObject const& other) = default;\
+	BoxedObject(BoxedObject&& other) noexcept = default;\
+	operator type&() { return *m_Obj; }\
+	type& GetObj() noexcept { return *m_Obj; }\
+private:\
+	static Reflection::ReflectionBaseClassesRegister<BoxedObject, Object> _s_ReflectionHelper_BoxedObject;\
+	static Reflection::ReflectionNonMemberMethodRegister<BoxedObject> _s_ReflectionHelper_BoxedObject_CopyConstructor;\
+	static Reflection::ReflectionNonMemberMethodRegister<BoxedObject> _s_ReflectionHelper_BoxedObject_MoveConstructor;\
+	static natRefPointer<Object> Constructor(BoxedObject const& other) { return make_ref<BoxedObject<type>>(other); }\
+	static natRefPointer<Object> Constructor(BoxedObject&& other) { return make_ref<BoxedObject<type>>(std::move(other)); }\
+	natRefPointer<type> m_Obj;\
+}
+
+#define REGISTER_BOXED_REFOBJECT_DEF(type) Reflection::ReflectionBaseClassesRegister<BoxedObject<type>, Object> BoxedObject<type>::_s_ReflectionHelper_BoxedObject { WITH() };\
+Reflection::ReflectionNonMemberMethodRegister<BoxedObject<type>> BoxedObject<type>::_s_ReflectionHelper_BoxedObject_CopyConstructor { AccessSpecifier::AccessSpecifier_public, "Constructor"_nv, static_cast<natRefPointer<Object>(*)(BoxedObject const&)>(&BoxedObject<type>::Constructor) };\
+Reflection::ReflectionNonMemberMethodRegister<BoxedObject<type>> BoxedObject<type>::_s_ReflectionHelper_BoxedObject_MoveConstructor { AccessSpecifier::AccessSpecifier_public, "Constructor"_nv, static_cast<natRefPointer<Object>(*)(BoxedObject&&)>(&BoxedObject<type>::Constructor) }
 
 #include "Field.h"
 

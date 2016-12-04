@@ -1,6 +1,7 @@
 #include <iostream>
 #include <chrono>
 #include <Reflection.h>
+#include <natStream.h>
 
 /*DECLARE_REFLECTABLE_INTERFACE(ISerializable)
 {
@@ -76,12 +77,17 @@ DEFINE_MEMBER_METHOD(public, Foo, , Test1, , void)()
 
 DEFINE_MEMBER_FIELD(private, Foo, int, m_Test);
 
+REGISTER_BOXED_REFOBJECT(natStream);
+REGISTER_BOXED_REFOBJECT_DEF(natStream);
+
 DECLARE_REFLECTABLE_CLASS_WITH_BASE_CLASS(Bar, Foo)
 {
 	GENERATE_METADATA_WITH_BASE_CLASSES(Bar, WITH(), Foo);
 
 	DECLARE_CONSTRUCTOR(public, Bar, explicit, , int);
 	DECLARE_VIRTUAL_MEMBER_METHOD(public, Bar, , Test, , int);
+
+	DECLARE_MEMBER_METHOD(public, Bar, , BoxedTest, , natRefPointer<Object>, natStream&);
 };
 
 GENERATE_METADATA_DEFINITION_WITH_BASE_CLASSES(Bar, WITH(), Foo);
@@ -95,6 +101,20 @@ DEFINE_VIRTUAL_MEMBER_METHOD(public, Bar, , Test, , int)()
 {
 	return Foo::Test() + 1;
 }
+
+DEFINE_MEMBER_METHOD(public, Bar, , BoxedTest, , natRefPointer<Object>, natStream&)(natStream& stream)
+{
+	static_cast<void>(stream);
+	return Box();
+}
+
+struct haha
+{
+	int a;
+};
+
+REGISTER_BOXED_OBJECT(haha);
+REGISTER_BOXED_OBJECT_DEF(haha);
 
 int main()
 {
@@ -121,6 +141,9 @@ int main()
 		auto type2 = typeofname("Bar"_nv);
 		auto pBar = type2->Construct({ 1 });
 		std::wcout << type2->InvokeMember(pBar, "Test"_nv, {})->ToString() << std::endl << std::endl;
+
+		natFileStream a{ "main.cpp"_nv, false, false };
+		type2->InvokeMember(pBar, "BoxedTest"_nv, { natRefPointer<natStream>{ &a } });
 
 		for (auto&& item : type2->GetBaseClasses())
 		{

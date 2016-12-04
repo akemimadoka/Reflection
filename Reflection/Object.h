@@ -25,16 +25,19 @@ struct Object
 	T& Unbox();
 
 	template <typename T>
-	static std::enable_if_t<std::is_base_of<Object, T>::value, natRefPointer<Object>> Box(T&& obj)
+	static std::enable_if_t<std::is_base_of<Object, T>::value, natRefPointer<Object>> Box(T obj)
 	{
 		return make_ref<T>(std::move(obj));
 	}
 
 	template <typename T>
-	static natRefPointer<Object> Box(natRefPointer<T> const& ptr)
+	static std::enable_if_t<std::is_base_of<Object, T>::value, natRefPointer<Object>> Box(natRefPointer<T> const& ptr)
 	{
 		return ptr;
 	}
+
+	template <typename T>
+	static std::enable_if_t<!std::is_base_of<Object, T>::value, natRefPointer<Object>> Box(natRefPointer<T> const& ptr);
 
 	// ¿ª¶´×¢Òâ
 	static natRefPointer<Object> Box(nStrView const& view)
@@ -43,7 +46,7 @@ struct Object
 	}
 
 	template <typename T>
-	static std::enable_if_t<std::disjunction<std::is_arithmetic<T>, std::is_same<T, nString>>::value, natRefPointer<Object>> Box(T obj);
+	static std::enable_if_t<!std::is_base_of<Object, T>::value, natRefPointer<Object>> Box(T obj);
 
 	static natRefPointer<Object> Box();
 };
