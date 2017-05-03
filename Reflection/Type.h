@@ -4,13 +4,14 @@
 #include <unordered_map>
 #include <natMisc.h>
 
-#define STR(x) #x##_nv
+#define STRIMPL_(x) #x##_nv
+#define STR(x) STRIMPL_(x)
 #define CONSTRUCTOR_NAME Constructor
 #define CONSTRUCTOR_NAME_STR STR(Constructor)
 
 template <typename T>
 class Type
-	: public natRefObjImpl<IType>
+	: public natRefObjImpl<Type<T>, IType>
 {
 public:
 	typedef T type;
@@ -26,7 +27,7 @@ public:
 		{
 			auto type = item->GetType();
 			auto usage = type->GetAttribute<AttributeUsage>();
-			if (usage && !(usage->GetTarget() & AttributeUsage::Class))
+			if (usage && (usage->GetTarget() & AttributeTarget::Class) == AttributeTarget::None)
 			{
 				nat_Throw(ReflectionException, "Attribute {0} cannot apply to class."_nv, type->GetName());
 			}
@@ -97,7 +98,6 @@ public:
 				}
 				catch (...)
 				{
-					// if all, rethrow below
 				}
 			}
 			nat_Throw(ReflectionException, "No such nonmember method named {0}."_nv, name);
@@ -146,21 +146,17 @@ public:
 
 	natRefPointer<IMethod> GetNonMemberMethod(nStrView name, std::initializer_list<natRefPointer<IType>> const& argTypes) override
 	{
-		auto range = m_NonMemberMethodMap.equal_range(name);
+		const auto range = m_NonMemberMethodMap.equal_range(name);
 		if (range.first == range.second)
 		{
 			for (auto&& item : m_BaseClasses)
 			{
-				try
+				if (auto method = item->GetNonMemberMethod(name, argTypes))
 				{
-					return item->GetNonMemberMethod(name, argTypes);
-				}
-				catch (...)
-				{
-					// if all, rethrow below
+					return method;
 				}
 			}
-			nat_Throw(ReflectionException, "No such nonmember method named {0}."_nv, name);
+			return {};
 		}
 
 		for (auto&& item : make_range(range.first, range.second))
@@ -180,26 +176,22 @@ public:
 			continue;
 		}
 
-		nat_Throw(ReflectionException, "None of overloaded nonmember method named {0} can be invoked with given args."_nv, name);
+		return {};
 	}
 
 	natRefPointer<IMemberMethod> GetMemberMethod(nStrView name, std::initializer_list<natRefPointer<IType>> const& argTypes) override
 	{
-		auto range = m_MemberMethodMap.equal_range(name);
+		const auto range = m_MemberMethodMap.equal_range(name);
 		if (range.first == range.second)
 		{
 			for (auto&& item : m_BaseClasses)
 			{
-				try
+				if (auto method = item->GetMemberMethod(name, argTypes))
 				{
-					return item->GetMemberMethod(name, argTypes);
-				}
-				catch (...)
-				{
-					// if all, rethrow below
+					return method;
 				}
 			}
-			nat_Throw(ReflectionException, "No such member method named {0}."_nv, name);
+			return {};
 		}
 
 		for (auto&& item : make_range(range.first, range.second))
@@ -219,7 +211,7 @@ public:
 			continue;
 		}
 
-		nat_Throw(ReflectionException, "None of overloaded member method named {0} can be invoked with given args."_nv, name);
+		return {};
 	}
 
 	bool IsNonMemberFieldPointer(nStrView name) override
@@ -423,7 +415,7 @@ public:
 
 		for (auto&& item : m_BaseClasses)
 		{
-			if (item->Equal(type) || item->IsExtendFrom(type))
+			if (item->Equal(type.Get()) || item->IsExtendFrom(type))
 			{
 				return true;
 			}

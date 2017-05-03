@@ -27,27 +27,31 @@ struct AttributeSet
 	std::vector<natRefPointer<IAttribute>> Attributes;
 };
 
+enum class AttributeTarget : uint8_t
+{
+	None = 0x00,
+
+	Class = 0x01,
+	Constructor = 0x02,
+	Field = 0x04,
+	Method = 0x08,
+	Parameter = 0x10,
+	ReturnValue = 0x20,
+	All = 0xFF,
+};
+
+MAKE_ENUM_CLASS_BITMASK_TYPE(AttributeTarget);
+
 class AttributeUsage
 	: public IAttribute
 {
 public:
-	enum AttributeTarget : uint8_t
-	{
-		Class = 0x01,
-		Constructor = 0x02,
-		Field = 0x04,
-		Method = 0x08,
-		Parameter = 0x10,
-		ReturnValue = 0x20,
-		All = 0xFF,
-	};
-
 	AttributeUsage() noexcept
-		: AttributeUsage(All)
+		: AttributeUsage(AttributeTarget::All)
 	{
 	}
 
-	explicit AttributeUsage(uint8_t target) noexcept
+	explicit AttributeUsage(AttributeTarget target) noexcept
 		: m_Target(target)
 	{
 	}
@@ -59,11 +63,11 @@ public:
 
 	natRefPointer<IType> GetType() const noexcept override;
 
-	uint8_t GetTarget() const noexcept
+	AttributeTarget GetTarget() const noexcept
 	{
 		return m_Target;
 	}
 
 private:
-	uint8_t m_Target;
+	AttributeTarget m_Target;
 };

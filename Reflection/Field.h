@@ -61,7 +61,7 @@ class NonMemberField;
 
 template <typename T>
 class NonMemberField<T*>
-	: public natRefObjImpl<IField>
+	: public natRefObjImpl<NonMemberField<T*>, IField>
 {
 public:
 	typedef T* FieldType;
@@ -112,7 +112,7 @@ class MemberField;
 
 template <typename Class, typename T>
 class MemberField<T(Class::*)>
-	: public natRefObjImpl<IMemberField>
+	: public natRefObjImpl<MemberField<T(Class::*)>, IMemberField>
 {
 public:
 	typedef T(Class::*FieldType);

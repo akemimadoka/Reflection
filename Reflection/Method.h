@@ -68,7 +68,7 @@ struct MethodHelper<Ret(*)(Args...)>
 
 	static decltype(auto) InvokeWithArgPack(MethodType method, ArgumentPack const& pack)
 	{
-		return InvokeWithArgPackHelper(method, pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
+		return InvokeWithArgPackHelper(method, pack, std::make_index_sequence<sizeof...(Args)>{});
 	}
 
 	static natRefPointer<Object> Invoke(MethodType method, ArgumentPack const& pack)
@@ -78,7 +78,7 @@ struct MethodHelper<Ret(*)(Args...)>
 
 	static bool CompatWith(ArgumentPack const& pack)
 	{
-		return CompatWithImpl(pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
+		return CompatWithImpl(pack, std::make_index_sequence<sizeof...(Args)>{});
 	}
 
 	static std::vector<natRefPointer<IType>> GetType()
@@ -113,7 +113,7 @@ struct MethodHelper<Ret(*)(rdetail_::forward_call_t, std::tuple<Args...>&&)>
 
 	static decltype(auto) InvokeWithArgPack(MethodType method, ArgumentPack const& pack)
 	{
-		return InvokeWithArgPackHelper(method, pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
+		return InvokeWithArgPackHelper(method, pack, std::make_index_sequence<sizeof...(Args)>{});
 	}
 
 	static natRefPointer<Object> Invoke(MethodType method, ArgumentPack const& pack)
@@ -123,7 +123,7 @@ struct MethodHelper<Ret(*)(rdetail_::forward_call_t, std::tuple<Args...>&&)>
 
 	static bool CompatWith(ArgumentPack const& pack)
 	{
-		return CompatWithImpl(pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
+		return CompatWithImpl(pack, std::make_index_sequence<sizeof...(Args)>{});
 	}
 
 	static std::vector<natRefPointer<IType>> GetType()
@@ -159,7 +159,7 @@ struct MethodHelper<Ret(Class::*)(Args...)>
 
 	static decltype(auto) InvokeWithArgPack(Class* object, MethodType method, ArgumentPack const& pack)
 	{
-		return InvokeWithArgPackHelper(object, method, pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
+		return InvokeWithArgPackHelper(object, method, pack, std::make_index_sequence<sizeof...(Args)>{});
 	}
 
 	static natRefPointer<Object> Invoke(natRefPointer<Object> object, MethodType method, ArgumentPack const& pack)
@@ -169,7 +169,7 @@ struct MethodHelper<Ret(Class::*)(Args...)>
 
 	static bool CompatWith(natRefPointer<Object> object, ArgumentPack const& pack)
 	{
-		return object->GetType()->GetTypeIndex() == typeid(Class) && CompatWithImpl(pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
+		return object->GetType()->GetTypeIndex() == typeid(Class) && CompatWithImpl(pack, std::make_index_sequence<sizeof...(Args)>{});
 	}
 
 	static std::vector<natRefPointer<IType>> GetType()
@@ -205,7 +205,7 @@ struct MethodHelper<Ret(Class::*)(rdetail_::forward_call_t, std::tuple<Args...>&
 
 	static decltype(auto) InvokeWithArgPack(Class* object, MethodType method, ArgumentPack const& pack)
 	{
-		return InvokeWithArgPackHelper(object, method, pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
+		return InvokeWithArgPackHelper(object, method, pack, std::make_index_sequence<sizeof...(Args)>{});
 	}
 
 	static natRefPointer<Object> Invoke(natRefPointer<Object> object, MethodType method, ArgumentPack const& pack)
@@ -215,7 +215,7 @@ struct MethodHelper<Ret(Class::*)(rdetail_::forward_call_t, std::tuple<Args...>&
 
 	static bool CompatWith(natRefPointer<Object> object, ArgumentPack const& pack)
 	{
-		return object->GetType()->GetTypeIndex() == typeid(Class) && CompatWithImpl(pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
+		return object->GetType()->GetTypeIndex() == typeid(Class) && CompatWithImpl(pack, std::make_index_sequence<sizeof...(Args)>{});
 	}
 
 	static std::vector<natRefPointer<IType>> GetType()
@@ -251,7 +251,7 @@ struct MethodHelper<Ret(Class::*)(Args...) const>
 
 	static decltype(auto) InvokeWithArgPack(const Class* object, MethodType method, ArgumentPack const& pack)
 	{
-		return InvokeWithArgPackHelper(object, method, pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
+		return InvokeWithArgPackHelper(object, method, pack, std::make_index_sequence<sizeof...(Args)>{});
 	}
 
 	static natRefPointer<Object> Invoke(natRefPointer<Object> object, MethodType method, ArgumentPack const& pack)
@@ -261,7 +261,7 @@ struct MethodHelper<Ret(Class::*)(Args...) const>
 
 	static bool CompatWith(natRefPointer<Object> object, ArgumentPack const& pack)
 	{
-		return object->GetType()->GetTypeIndex() == typeid(Class) && CompatWithImpl(pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
+		return object->GetType()->GetTypeIndex() == typeid(Class) && CompatWithImpl(pack, std::make_index_sequence<sizeof...(Args)>{});
 	}
 
 	static std::vector<natRefPointer<IType>> GetType()
@@ -297,7 +297,7 @@ struct MethodHelper<Ret(Class::*)(rdetail_::forward_call_t, std::tuple<Args...>&
 
 	static decltype(auto) InvokeWithArgPack(const Class* object, MethodType method, ArgumentPack const& pack)
 	{
-		return InvokeWithArgPackHelper(object, method, pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
+		return InvokeWithArgPackHelper(object, method, pack, std::make_index_sequence<sizeof...(Args)>{});
 	}
 
 	static natRefPointer<Object> Invoke(natRefPointer<Object> object, MethodType method, ArgumentPack const& pack)
@@ -307,7 +307,7 @@ struct MethodHelper<Ret(Class::*)(rdetail_::forward_call_t, std::tuple<Args...>&
 
 	static bool CompatWith(natRefPointer<Object> object, ArgumentPack const& pack)
 	{
-		return object->GetType()->GetTypeIndex() == typeid(Class) && CompatWithImpl(pack, typename std::make_index_sequence<sizeof...(Args)>::type{});
+		return object->GetType()->GetTypeIndex() == typeid(Class) && CompatWithImpl(pack, std::make_index_sequence<sizeof...(Args)>{});
 	}
 
 	static std::vector<natRefPointer<IType>> GetType()
@@ -334,7 +334,7 @@ class NonMemberMethod;
 
 template <typename Ret, typename... Args>
 class NonMemberMethod<Ret(*)(Args...)>
-	: public natRefObjImpl<IMethod>
+	: public natRefObjImpl<NonMemberMethod<Ret(*)(Args...)>, IMethod>
 {
 public:
 	typedef Ret(*MethodType)(Args...);
@@ -395,7 +395,7 @@ class MemberMethod;
 
 template <typename Ret, typename Class, typename... Args>
 class MemberMethod<Ret(Class::*)(Args...)>
-	: public natRefObjImpl<IMemberMethod>
+	: public natRefObjImpl<MemberMethod<Ret(Class::*)(Args...)>, IMemberMethod>
 {
 public:
 	typedef	Ret(Class::*MethodType)(Args...);
@@ -479,7 +479,7 @@ private:
 
 template <typename Ret, typename Class, typename... Args>
 class MemberMethod<Ret(Class::*)(Args...) const>
-	: public natRefObjImpl<IMemberMethod>
+	: public natRefObjImpl<MemberMethod<Ret(Class::*)(Args...) const>, IMemberMethod>
 {
 public:
 	typedef	Ret(Class::*MethodType)(Args...) const;

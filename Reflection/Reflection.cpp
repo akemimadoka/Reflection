@@ -1,11 +1,16 @@
 #include "Reflection.h"
 
-#ifdef _UNICODE
-#define toTString std::to_wstring
-typedef WideStringView TStrView;
+#ifdef _WIN32
+	#ifdef _UNICODE
+		#define toTString std::to_wstring
+		typedef WideStringView TStrView;
+	#else
+		#define toTString std::to_string
+		typedef AnsiStringView TStrView;
+	#endif
 #else
-#define toTString std::to_string
-typedef AnsiStringView TStrView;
+	#define toTString std::to_string
+	typedef U8StringView TStrView;
 #endif
 
 Reflection& Reflection::GetInstance()
@@ -382,7 +387,7 @@ Reflection::Reflection()
 {
 	RegisterType<Object>();
 	RegisterType<IAttribute>();
-	RegisterType<AttributeUsage>()->UncheckedRegisterAttributes({ AttributeUsage{ AttributeUsage::Class } });
+	RegisterType<AttributeUsage>()->UncheckedRegisterAttributes({ AttributeUsage{ AttributeTarget::Class } });
 	INITIALIZEBOXEDOBJECT(bool, Bool);
 	INITIALIZEBOXEDOBJECT(char, Char);
 	INITIALIZEBOXEDOBJECT(wchar_t, WChar);

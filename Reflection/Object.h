@@ -8,7 +8,7 @@ natRefPointer<Object> CommonConstructor(std::tuple<Args...>&& args, std::index_s
 }
 
 struct Object
-	: natRefObjImpl<Interface>
+	: natRefObjImpl<Object, Interface>
 {
 	virtual ~Object();
 

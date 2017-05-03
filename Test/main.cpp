@@ -18,12 +18,12 @@ DEFINE_PURE_VIRTUAL_MEMBER_METHOD(public, ISerializable, , Deserialize, , size_t
 
 DECLARE_REFLECTABLE_CLASS_WITH_BASE_CLASSES(TestAttribute, IAttribute)
 {
-	GENERATE_METADATA_WITH_BASE_CLASSES(TestAttribute, WITH(AttributeUsage(AttributeUsage::Class)), IAttribute);
+	GENERATE_METADATA_WITH_BASE_CLASSES(TestAttribute, WITH(AttributeUsage(AttributeTarget::Class)), IAttribute);
 
 	DECLARE_CONST_MEMBER_METHOD(public, TestAttribute, , Test, , int);
 };
 
-GENERATE_METADATA_DEFINITION_WITH_BASE_CLASSES(TestAttribute, WITH(AttributeUsage(AttributeUsage::Class)), IAttribute);
+GENERATE_METADATA_DEFINITION_WITH_BASE_CLASSES(TestAttribute, WITH(AttributeUsage(AttributeTarget::Class)), IAttribute);
 
 DEFINE_CONST_MEMBER_METHOD(public, TestAttribute, , Test, , int)() const
 {
@@ -173,11 +173,11 @@ int main()
 		{
 			if (std::get<0>(item))
 			{
-				std::wcout << "Method : "_nv << std::get<1>(item) << std::endl;
+				std::wcout << "Method : " << std::get<1>(item) << std::endl;
 			}
 			else
 			{
-				std::wcout << "Field : "_nv << std::get<1>(item) << " ("_nv << std::get<2>(item)->GetName() << ")"_nv << std::endl;
+				std::wcout << "Field : " << std::get<1>(item) << " (" << std::get<2>(item)->GetName() << ")" << std::endl;
 			}
 		}
 
@@ -217,7 +217,7 @@ int main()
 	}
 	catch (std::exception& e)
 	{
-		std::cout << e.what() << std::endl;
+		std::cout << nStrView{ e.what() } << std::endl;
 	}
 
 #ifdef _WIN32

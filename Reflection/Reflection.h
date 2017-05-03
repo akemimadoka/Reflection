@@ -51,7 +51,7 @@ accessspecifier: specifiers classname(__VA_ARGS__)
 #define DEFINE_CONSTRUCTOR(accessspecifier, classname, specifiers, id, ...) Reflection::ReflectionNonMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberMethod_##Constructor##_##id##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, "Constructor"_nv, static_cast<natRefPointer<Object>(*)(rdetail_::forward_call_t, std::tuple<__VA_ARGS__>&&)>(&classname::Constructor) };\
 natRefPointer<Object> classname::Constructor(rdetail_::forward_call_t, std::tuple<__VA_ARGS__>&& args)\
 {\
-	return ::CommonConstructor<classname>(std::move(args), typename std::make_index_sequence<std::tuple_size<std::remove_reference_t<decltype(args)>>::value>::type{});\
+	return ::CommonConstructor<classname>(std::move(args), typename std::make_index_sequence<std::tuple_size<std::remove_reference_t<decltype(args)>>::value>{});\
 }\
 classname::classname
 
@@ -59,14 +59,14 @@ classname::classname
 #define DEFINE_DEFAULT_COPYCONSTRUCTOR(accessspecifier, classname) Reflection::ReflectionNonMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberMethod_##Constructor##_CopyConstructor##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, "Constructor"_nv, static_cast<natRefPointer<Object>(*)(rdetail_::forward_call_t, std::tuple<classname const&>&&)>(&classname::Constructor) };\
 natRefPointer<Object> classname::Constructor(rdetail_::forward_call_t, std::tuple<classname const&>&& args)\
 {\
-	return ::CommonConstructor<classname>(std::move(args), typename std::make_index_sequence<std::tuple_size<std::remove_reference_t<decltype(args)>>::value>::type{});\
+	return ::CommonConstructor<classname>(std::move(args), typename std::make_index_sequence<std::tuple_size<std::remove_reference_t<decltype(args)>>::value>{});\
 }
 
 #define DECLARE_DEFAULT_MOVECONSTRUCTOR(accessspecifier, classname) DECLARE_CONSTRUCTOR(accessspecifier, classname, , MoveConstructor, classname &&) = default
 #define DEFINE_DEFAULT_MOVECONSTRUCTOR(accessspecifier, classname) Reflection::ReflectionNonMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_NonMemberMethod_##Constructor##_MoveConstructor##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, "Constructor"_nv, static_cast<natRefPointer<Object>(*)(rdetail_::forward_call_t, std::tuple<classname &&>&&)>(&classname::Constructor) };\
 natRefPointer<Object> classname::Constructor(rdetail_::forward_call_t, std::tuple<classname &&>&& args)\
 {\
-	return ::CommonConstructor<classname>(std::move(args), typename std::make_index_sequence<std::tuple_size<std::remove_reference_t<decltype(args)>>::value>::type{});\
+	return ::CommonConstructor<classname>(std::move(args), typename std::make_index_sequence<std::tuple_size<std::remove_reference_t<decltype(args)>>::value>{});\
 }
 
 #define DECLARE_MEMBER_METHOD(accessspecifier, classname, specifiers, methodname, id, returntype, ...) private: static Reflection::ReflectionMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_MemberMethod_##methodname##_##id##_;\
@@ -93,7 +93,7 @@ accessspecifier: virtual specifiers returntype methodname(__VA_ARGS__)
 #define DEFINE_VIRTUAL_MEMBER_METHOD(accessspecifier, classname, specifiers, methodname, id, returntype, ...) Reflection::ReflectionMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_Virtual_MemberMethod_##methodname##_##id##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, true, #methodname##_nv, static_cast<returntype(classname::*)(rdetail_::forward_call_t, std::tuple<__VA_ARGS__>&&)>(&classname::methodname##_forwarder_) };\
 specifiers returntype classname::methodname##_forwarder_(rdetail_::forward_call_t, std::tuple<__VA_ARGS__>&& argTuple)\
 {\
-	return methodname##_forwarder_impl_(std::move(argTuple), typename std::make_index_sequence<std::tuple_size<std::remove_reference_t<decltype(argTuple)>>::value>::type{});\
+	return methodname##_forwarder_impl_(std::move(argTuple), typename std::make_index_sequence<std::tuple_size<std::remove_reference_t<decltype(argTuple)>>::value>{});\
 }\
 specifiers returntype classname::methodname
 
@@ -109,7 +109,7 @@ accessspecifier: virtual specifiers returntype methodname(__VA_ARGS__) = 0
 #define DEFINE_PURE_VIRTUAL_MEMBER_METHOD(accessspecifier, classname, specifiers, methodname, id, returntype, ...) Reflection::ReflectionMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_PureVirtual_MemberMethod_##methodname##_##id##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, true, #methodname##_nv, static_cast<returntype(classname::*)(rdetail_::forward_call_t, std::tuple<__VA_ARGS__>&&)>(&classname::methodname##_forwarder_) };\
 specifiers returntype classname::methodname##_forwarder_(rdetail_::forward_call_t, std::tuple<__VA_ARGS__>&& argTuple)\
 {\
-	return methodname##_forwarder_impl_(std::move(argTuple), typename std::make_index_sequence<std::tuple_size<std::remove_reference_t<decltype(argTuple)>>::value>::type{});\
+	return methodname##_forwarder_impl_(std::move(argTuple), typename std::make_index_sequence<std::tuple_size<std::remove_reference_t<decltype(argTuple)>>::value>{});\
 }
 
 #define DECLARE_VIRTUAL_CONST_MEMBER_METHOD(accessspecifier, classname, specifiers, methodname, id, returntype, ...) private: static Reflection::ReflectionMemberMethodRegister<classname> _s_ReflectionHelper_##classname##_Virtual_Const_MemberMethod_##methodname##_##id##_;\
@@ -124,7 +124,7 @@ accessspecifier: virtual specifiers returntype methodname(__VA_ARGS__) const
 #define DEFINE_VIRTUAL_CONST_MEMBER_METHOD(accessspecifier, classname, specifiers, methodname, id, returntype, ...) Reflection::ReflectionMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_Virtual_Const_MemberMethod_##methodname##_##id##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, true, #methodname##_nv, static_cast<returntype(classname::*)(rdetail_::forward_call_t, std::tuple<__VA_ARGS__>&&) const>(&classname::methodname##_forwarder_) };\
 specifiers returntype classname::methodname##_forwarder_(rdetail_::forward_call_t, std::tuple<__VA_ARGS__>&& argTuple) const\
 {\
-	return methodname##_forwarder_impl_(std::move(argTuple), typename std::make_index_sequence<std::tuple_size<std::remove_reference_t<decltype(argTuple)>>::value>::type{});\
+	return methodname##_forwarder_impl_(std::move(argTuple), typename std::make_index_sequence<std::tuple_size<std::remove_reference_t<decltype(argTuple)>>::value>{});\
 }\
 specifiers returntype classname::methodname
 
@@ -140,7 +140,7 @@ accessspecifier: virtual specifiers returntype methodname(__VA_ARGS__) const = 0
 #define DEFINE_PURE_VIRTUAL_CONST_MEMBER_METHOD(accessspecifier, classname, specifiers, methodname, id, returntype, ...) Reflection::ReflectionMemberMethodRegister<classname> classname::_s_ReflectionHelper_##classname##_PureVirtual_Const_MemberMethod_##methodname##_##id##_{ AccessSpecifier::AccessSpecifier_##accessspecifier, true, #methodname##_nv, static_cast<returntype(classname::*)(rdetail_::forward_call_t, std::tuple<__VA_ARGS__>&&)>(&classname::methodname##_forwarder_) };\
 specifiers returntype classname::methodname##_forwarder_(rdetail_::forward_call_t, std::tuple<__VA_ARGS__>&& argTuple)\
 {\
-	return methodname##_forwarder_impl_(std::move(argTuple), typename std::make_index_sequence<std::tuple_size<std::remove_reference_t<decltype(argTuple)>>::value>::type{});\
+	return methodname##_forwarder_impl_(std::move(argTuple), typename std::make_index_sequence<std::tuple_size<std::remove_reference_t<decltype(argTuple)>>::value>{});\
 }
 
 #define DECLARE_CONVERSION_OPERATOR(accessspecifier, classname, targettype) DECLARE_MEMBER_METHOD(accessspecifier, classname, , ConvertTo##targettype, , natRefPointer<Object>);\
@@ -822,7 +822,7 @@ void Reflection::RegisterMemberMethod(AccessSpecifier accessSpecifier, bool isVi
 
 inline natRefPointer<Object> Convert::ConvertTo(natRefPointer<Object> obj, natRefPointer<IType> toType)
 {
-	if (obj->GetType()->Equal(toType))
+	if (obj->GetType()->Equal(toType.Get()))
 	{
 		return obj;
 	}
