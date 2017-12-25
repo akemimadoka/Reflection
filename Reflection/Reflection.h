@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <natRefObj.h>
 #include <natException.h>
 #include <natConcepts.h>
@@ -205,6 +205,7 @@ namespace rdetail_
 }
 
 class Reflection
+	: nonmovable
 {
 public:
 	template <typename T>
@@ -361,9 +362,9 @@ struct should_box<T, std::void_t<std::enable_if_t<!std::is_base_of<Object, T>::v
 {
 };
 
-// ÈôĞèÒª½«²¢·ÇÅÉÉúÓÚObjectµÄÀàĞÍ×÷Îª¿É·´Éä¶ÔÏóÊ¹ÓÃ£¨ÀıÈçº¯ÊıµÄ²ÎÊı»ò·µ»ØÖµµÈ£©£¬ĞèÒªÔÚ´Ë¶ÔBoxedObjectÌØ»¯´ËÀàĞÍ
-// ×¢ÒâÄãÈÔÈ»ĞèÒªÊÖ¶¯»òÕßÀûÓÃºêÀ´×¢²á
-// BoxedObject±ØĞë¼Ì³ĞÓÚObjectÇÒGetObj·½·¨·µ»ØµÚÒ»¸öÄ£°å²ÎÊıµÄÀàĞÍµÄ×óÖµÒıÓÃ
+// è‹¥éœ€è¦å°†å¹¶éæ´¾ç”ŸäºObjectçš„ç±»å‹ä½œä¸ºå¯åå°„å¯¹è±¡ä½¿ç”¨ï¼ˆä¾‹å¦‚å‡½æ•°çš„å‚æ•°æˆ–è¿”å›å€¼ç­‰ï¼‰ï¼Œéœ€è¦åœ¨æ­¤å¯¹BoxedObjectç‰¹åŒ–æ­¤ç±»å‹
+// æ³¨æ„ä½ ä»ç„¶éœ€è¦æ‰‹åŠ¨æˆ–è€…åˆ©ç”¨å®æ¥æ³¨å†Œ
+// BoxedObjectå¿…é¡»ç»§æ‰¿äºObjectä¸”GetObjæ–¹æ³•è¿”å›ç¬¬ä¸€ä¸ªæ¨¡æ¿å‚æ•°çš„ç±»å‹çš„å·¦å€¼å¼•ç”¨
 template <typename T, typename Test = void>
 class BoxedObject final
 	: public Object
@@ -711,7 +712,7 @@ T& Object::Unbox()
 	{
 		return static_cast<BoxedObject<T>*>(this)->GetObj();
 	}
-	// ¿ªÏú¾Ş´óËùÒÔÁôÔÚ×îºóÅĞ¶Ï
+	// å¼€é”€å·¨å¤§æ‰€ä»¥ç•™åœ¨æœ€ååˆ¤æ–­
 	auto Ttype = typeof(boxed_type_t<T>);
 	if (type->IsExtendFrom(Ttype) || Ttype->IsExtendFrom(type))
 	{
@@ -737,7 +738,7 @@ natRefPointer<IType> Reflection::GetType()
 	nat_Throw(ReflectionException, "Type not found."_nv);
 }
 
-// ÒªÇóÕâ¸öÀàĞÍ¿ÉÒÔ±»ÊµÀı»¯ÒÔ¼°ÒÆ¶¯¹¹Ôì£¬Èç¹ûÄãµÄÀàĞÍ²»·ûºÏÕâ¸öÒªÇó£¬ÄãĞèÒª×ÔĞĞÌØ»¯
+// è¦æ±‚è¿™ä¸ªç±»å‹å¯ä»¥è¢«å®ä¾‹åŒ–ä»¥åŠç§»åŠ¨æ„é€ ï¼Œå¦‚æœä½ çš„ç±»å‹ä¸ç¬¦åˆè¿™ä¸ªè¦æ±‚ï¼Œä½ éœ€è¦è‡ªè¡Œç‰¹åŒ–
 #define REGISTER_BOXED_OBJECT(type) template <>\
 class BoxedObject<type> final : public Object\
 {\

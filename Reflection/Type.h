@@ -14,7 +14,7 @@ class Type
 	: public natRefObjImpl<Type<T>, IType>
 {
 public:
-	typedef T type;
+	typedef T OriginType;
 
 	void UncheckedRegisterAttributes(AttributeSet&& attributes)
 	{
@@ -25,8 +25,8 @@ public:
 	{
 		for (auto&& item : attributes.Attributes)
 		{
-			auto type = item->GetType();
-			auto usage = type->GetAttribute<AttributeUsage>();
+			const auto type = item->GetType();
+			const auto usage = type->GetAttribute<AttributeUsage>();
 			if (usage && (usage->GetTarget() & AttributeTarget::Class) == AttributeTarget::None)
 			{
 				nat_Throw(ReflectionException, "Attribute {0} cannot apply to class."_nv, type->GetName());
@@ -87,7 +87,7 @@ public:
 
 	natRefPointer<Object> InvokeNonMember(nStrView name, ArgumentPack const& args) override
 	{
-		auto range = m_NonMemberMethodMap.equal_range(name);
+		const auto range = m_NonMemberMethodMap.equal_range(name);
 		if (range.first == range.second)
 		{
 			for (auto&& item : m_BaseClasses)
@@ -116,7 +116,7 @@ public:
 
 	natRefPointer<Object> InvokeMember(natRefPointer<Object> object, nStrView name, ArgumentPack const& args) override
 	{
-		auto range = m_MemberMethodMap.equal_range(name);
+		const auto range = m_MemberMethodMap.equal_range(name);
 		if (range.first == range.second)
 		{
 			for (auto&& item : m_BaseClasses)
@@ -216,7 +216,7 @@ public:
 
 	bool IsNonMemberFieldPointer(nStrView name) override
 	{
-		auto iter = m_NonMemberFieldMap.find(name);
+		const auto iter = m_NonMemberFieldMap.find(name);
 		if (iter == m_NonMemberFieldMap.end())
 		{
 			nat_Throw(ReflectionException, "No such member field named {0}."_nv, name);
@@ -227,7 +227,7 @@ public:
 
 	bool IsMemberFieldPointer(nStrView name) override
 	{
-		auto iter = m_MemberFieldMap.find(name);
+		const auto iter = m_MemberFieldMap.find(name);
 		if (iter == m_MemberFieldMap.end())
 		{
 			nat_Throw(ReflectionException, "No such member field named {0}."_nv, name);
@@ -238,7 +238,7 @@ public:
 
 	natRefPointer<Object> ReadNonMemberField(nStrView name) override
 	{
-		auto iter = m_NonMemberFieldMap.find(name);
+		const auto iter = m_NonMemberFieldMap.find(name);
 		if (iter == m_NonMemberFieldMap.end())
 		{
 			nat_Throw(ReflectionException, "No such member field named {0}."_nv, name);
@@ -249,7 +249,7 @@ public:
 
 	natRefPointer<Object> ReadMemberField(natRefPointer<Object> object, nStrView name) override
 	{
-		auto iter = m_MemberFieldMap.find(name);
+		const auto iter = m_MemberFieldMap.find(name);
 		if (iter == m_MemberFieldMap.end())
 		{
 			nat_Throw(ReflectionException, "No such member field named {0}."_nv, name);
@@ -260,7 +260,7 @@ public:
 
 	void WriteNonMemberField(nStrView name, natRefPointer<Object> value) override
 	{
-		auto iter = m_NonMemberFieldMap.find(name);
+		const auto iter = m_NonMemberFieldMap.find(name);
 		if (iter == m_NonMemberFieldMap.end())
 		{
 			nat_Throw(ReflectionException, "No such member field named {0}."_nv, name);
@@ -271,7 +271,7 @@ public:
 
 	void WriteMemberField(natRefPointer<Object> object, nStrView name, natRefPointer<Object> value) override
 	{
-		auto iter = m_MemberFieldMap.find(name);
+		const auto iter = m_MemberFieldMap.find(name);
 		if (iter == m_MemberFieldMap.end())
 		{
 			nat_Throw(ReflectionException, "No such member field named {0}."_nv, name);
@@ -282,7 +282,7 @@ public:
 	
 	natRefPointer<IField> GetNonMemberField(nStrView name) override
 	{
-		auto iter = m_NonMemberFieldMap.find(name);
+		const auto iter = m_NonMemberFieldMap.find(name);
 		if (iter == m_NonMemberFieldMap.end())
 		{
 			nat_Throw(ReflectionException, "No such member field named {0}."_nv, name);
@@ -293,7 +293,7 @@ public:
 
 	natRefPointer<IMemberField> GetMemberField(nStrView name) override
 	{
-		auto iter = m_MemberFieldMap.find(name);
+		const auto iter = m_MemberFieldMap.find(name);
 		if (iter == m_MemberFieldMap.end())
 		{
 			nat_Throw(ReflectionException, "No such member field named {0}."_nv, name);
@@ -322,7 +322,10 @@ public:
 		{
 			for (auto&& item : m_BaseClasses)
 			{
-				item->EnumNonMember(true, enumFunc);
+				if (item->EnumNonMember(true, enumFunc))
+				{
+					return true;
+				}
 			}
 		}
 
@@ -369,7 +372,10 @@ public:
 		{
 			for (auto&& item : m_BaseClasses)
 			{
-				item->EnumMember(true, enumFunc);
+				if (item->EnumMember(true, enumFunc))
+				{
+					return true;
+				}
 			}
 		}
 
